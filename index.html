@@ -39,6 +39,17 @@
     <!-- Google Fonts Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- PDF.js CDN for Bank Statement Reader -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        if (typeof pdfjsLib !== 'undefined') {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+    </script>
+    
+    <!-- Google Identity Services SDK -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
     <style>
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
@@ -51,8 +62,6 @@
         }
         .cloud-pulse { animation: pulse-subtle 2s infinite ease-in-out; }
     </style>
-<!-- Google Identity Services SDK -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200">
 
@@ -123,6 +132,7 @@
                         <i id="signin-spinner" class="fa-solid fa-circle-notch fa-spin hidden"></i>
                     </button>
                 </form>
+
                 <!-- Divider & Google Sign-In Button -->
                 <div class="relative my-4 text-center">
                     <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-200 dark:border-slate-700"></div></div>
@@ -505,7 +515,7 @@
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                             <div>
                                 <h3 class="text-xl font-bold">50/30/20 Budget Allocator</h3>
-                                <p class="text-xs text-slate-500 mt-1">Needs (50%), Wants (30%), Savings (20%) — Loans & EMIs automatically synced into Needs</p>
+                                <p class="text-xs text-slate-500 mt-1">Needs (50%), Wants (30%), Savings (20%) — Loans & EMIs synced into Needs, SIPs synced into Savings</p>
                             </div>
                             <div class="flex items-center gap-2.5 flex-wrap">
                                 <button onclick="apply503020Rule()" class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold shadow transition">
@@ -530,7 +540,7 @@
                             <div class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-2xl border border-slate-200 dark:border-slate-700">
                                 <span class="text-xs font-semibold text-slate-500">Savings (Target: 20%)</span>
                                 <div id="budget-save-total" class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">₹0</div>
-                                <span class="text-xs text-blue-600 mt-1 block">SIPs, PPF, Emergency Fund</span>
+                                <span class="text-xs text-blue-600 mt-1 block">Monthly SIPs, PPF, Emergency Fund</span>
                             </div>
                         </div>
                         <div id="unallocated-banner" class="p-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/50 rounded-xl flex items-center justify-between">
@@ -576,6 +586,9 @@
                         <div class="flex items-center gap-2.5 flex-wrap justify-end">
                             <button onclick="openRecurringModal()" class="px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-xl text-xs sm:text-sm font-semibold transition">
                                 <i class="fa-solid fa-repeat mr-1.5 text-brand-600"></i> Recurring (<span id="recurring-count">0</span>)
+                            </button>
+                            <button onclick="openStatementModal()" class="px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-xs sm:text-sm font-semibold shadow transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-file-invoice text-emerald-200"></i> Statement Reader
                             </button>
                             <input type="file" id="csv-file-input" accept=".csv" onchange="handleCsvFileSelected(event)" class="hidden">
                             <button onclick="document.getElementById('csv-file-input').click()" class="px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-xl text-xs sm:text-sm font-semibold transition">
@@ -626,7 +639,9 @@
                         <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
                             <span class="text-xs font-semibold text-slate-500">Active Monthly SIP Total</span>
                             <div id="inv-monthly-sip" class="text-3xl font-bold mt-1 text-blue-600">₹0</div>
-                            <span class="text-xs text-slate-500 mt-2 block">Tracked across holdings</span>
+                            <span class="text-xs text-emerald-600 dark:text-emerald-400 mt-2 block font-medium">
+                                <i class="fa-solid fa-link mr-1"></i> Synced to Budget Savings
+                            </span>
                         </div>
                     </div>
 
@@ -634,7 +649,7 @@
                         <div class="flex justify-between items-center mb-4">
                             <div>
                                 <h3 class="font-bold text-base sm:text-lg">Holdings & Assets</h3>
-                                <p class="text-xs text-slate-400">Mutual Funds, Stocks, Gold, PPF, FDs</p>
+                                <p class="text-xs text-slate-400">Mutual Funds, Stocks, Gold, PPF, FDs with individual monthly SIPs</p>
                             </div>
                             <button onclick="openAddHoldingModal()" class="text-xs font-semibold bg-brand-600 text-white px-3.5 py-2 rounded-xl shadow hover:bg-brand-700 transition">
                                 <i class="fa-solid fa-plus mr-1"></i> Add Holding
@@ -648,6 +663,7 @@
                                         <th class="py-3">Type</th>
                                         <th class="py-3">Invested</th>
                                         <th class="py-3">Current Value</th>
+                                        <th class="py-3">Monthly SIP</th>
                                         <th class="py-3 text-right">Gain / Loss</th>
                                         <th class="py-3 text-center">Actions</th>
                                     </tr>
@@ -671,6 +687,11 @@
                             <div class="text-right">
                                 <span class="text-xs text-slate-500">Current Net Worth</span>
                                 <div id="net-worth-total" class="text-2xl font-bold text-brand-600">₹0</div>
+                                <div class="flex items-center gap-2 justify-end mt-1 text-[11px]">
+                                    <span class="text-emerald-600 dark:text-emerald-400 font-semibold" id="net-worth-assets">Assets: ₹0</span>
+                                    <span class="text-slate-400">•</span>
+                                    <span class="text-rose-500 font-semibold" id="net-worth-debts">Debts: ₹0</span>
+                                </div>
                             </div>
                         </div>
                         <div class="h-64">
@@ -999,6 +1020,93 @@
         </div>
     </div>
 
+    <!-- Bank Statement Reader & Smart Categorizer Modal -->
+    <div id="statement-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center hidden p-3 sm:p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-2xl w-full p-5 sm:p-6 border border-slate-200 dark:border-slate-700 max-h-[92vh] flex flex-col">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center mb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg shadow-sm">
+                        <i class="fa-solid fa-file-invoice"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-base sm:text-lg">Bank Statement Reader</h3>
+                        <p class="text-xs text-slate-400">Upload unlocked PDF or CSV bank statements to auto-categorize expenses</p>
+                    </div>
+                </div>
+                <button onclick="closeStatementModal()" class="text-slate-400 hover:text-slate-600 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <!-- Upload Area & Password Option -->
+            <div id="statement-upload-step" class="space-y-4">
+                <div class="p-6 border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-brand-500 dark:hover:border-brand-500 rounded-2xl text-center bg-slate-50/50 dark:bg-slate-900/50 cursor-pointer transition group" onclick="document.getElementById('statement-file-input').click()">
+                    <i class="fa-solid fa-cloud-arrow-up text-3xl text-brand-600 group-hover:scale-110 transition mb-2 block"></i>
+                    <h4 class="font-semibold text-sm">Click or Drag & Drop Bank Statement</h4>
+                    <p class="text-xs text-slate-400 mt-1">Supports PDF statements (HDFC, SBI, ICICI, Axis, Kotak, etc.) & CSV exports</p>
+                    <input type="file" id="statement-file-input" accept=".pdf,.csv,.txt" onchange="handleStatementFileSelected(event)" class="hidden">
+                </div>
+
+                <div class="p-3.5 bg-slate-50 dark:bg-slate-700/40 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <div class="flex-1">
+                        <label class="block text-[11px] font-semibold text-slate-500 uppercase">PDF Password (if statement is locked)</label>
+                        <p class="text-[10px] text-slate-400">Leave blank if statement is already unlocked or in CSV format.</p>
+                    </div>
+                    <div class="w-full sm:w-48 relative">
+                        <input type="password" id="statement-pdf-password" placeholder="e.g. DOB or PAN" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs outline-none">
+                    </div>
+                </div>
+
+                <div id="statement-reading-spinner" class="hidden text-center py-5 space-y-2">
+                    <i class="fa-solid fa-circle-notch fa-spin text-2xl text-brand-600"></i>
+                    <p class="text-xs font-semibold text-slate-600 dark:text-slate-300">Reading statement & auto-detecting categories...</p>
+                </div>
+            </div>
+
+            <!-- Review & Allocation Step -->
+            <div id="statement-review-step" class="hidden flex-1 flex flex-col min-h-0 space-y-3">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 p-3 bg-brand-50 dark:bg-brand-950/40 border border-brand-200/60 dark:border-brand-800/40 rounded-xl text-xs">
+                    <div>
+                        <span id="statement-summary-text" class="font-bold text-brand-900 dark:text-brand-300">0 transactions detected</span>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Review and re-allocate any category before importing to your ledger.</p>
+                    </div>
+                    <div class="flex items-center gap-2 self-end sm:self-center">
+                        <button type="button" onclick="toggleSelectAllStatement(true)" class="text-[11px] font-semibold text-brand-700 dark:text-brand-400 hover:underline">Select All</button>
+                        <span class="text-slate-300 dark:text-slate-600">•</span>
+                        <button type="button" onclick="toggleSelectAllStatement(false)" class="text-[11px] font-semibold text-slate-500 hover:underline">Deselect All</button>
+                    </div>
+                </div>
+
+                <!-- Scrollable Table -->
+                <div class="flex-1 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-xl min-h-[220px]">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-50 dark:bg-slate-700/60 sticky top-0 z-10 text-[11px] font-semibold text-slate-500 uppercase border-b border-slate-200 dark:border-slate-700">
+                            <tr>
+                                <th class="p-2.5 text-center w-8"><input type="checkbox" id="statement-master-check" onchange="toggleSelectAllStatement(this.checked)" checked class="accent-brand-600"></th>
+                                <th class="p-2.5">Date</th>
+                                <th class="p-2.5">Merchant / Narration</th>
+                                <th class="p-2.5">Category (Adjustable)</th>
+                                <th class="p-2.5 text-right">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="statement-transactions-body" class="divide-y divide-slate-100 dark:divide-slate-700">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Footer buttons -->
+                <div class="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-700">
+                    <button type="button" onclick="resetStatementReader()" class="px-4 py-2 text-xs font-semibold rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+                        <i class="fa-solid fa-arrow-left mr-1"></i> Choose Another File
+                    </button>
+                    <button type="button" onclick="confirmImportStatementTransactions()" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs sm:text-sm font-semibold shadow transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-check"></i> Import Selected Expenses
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Recurring Bills Modal -->
     <div id="recurring-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center hidden p-4">
         <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-lg w-full p-6 border border-slate-200 dark:border-slate-700 space-y-4">
@@ -1124,7 +1232,7 @@
         </div>
     </div>
 
-    <!-- Add / Edit Holding Modal -->
+    <!-- Add / Edit Holding Modal with Monthly SIP Field -->
     <div id="holding-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center hidden p-4">
         <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-700">
             <div class="flex justify-between items-center mb-4">
@@ -1157,6 +1265,13 @@
                         <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Current Value (₹)</label>
                         <input type="number" inputmode="numeric" id="holding-current" required placeholder="e.g. 58000" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
                     </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Monthly SIP (₹ / month)</label>
+                    <input type="number" inputmode="numeric" id="holding-sip" placeholder="e.g. 5000 (0 if one-time/lump sum)" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                    <p class="text-[10px] text-brand-600 dark:text-brand-400 mt-1 flex items-center gap-1 font-medium">
+                        <i class="fa-solid fa-arrows-rotate text-[9px]"></i> Automatically synced to your monthly Budget under Savings.
+                    </p>
                 </div>
                 <button type="submit" id="holding-submit-btn" class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-2xl shadow-lg transition">Save Holding</button>
             </form>
@@ -1224,7 +1339,7 @@
         </div>
     </div>
 
-    <!-- Application JavaScript Engine (Universal Cross-Device Cloud-Sync) -->
+    <!-- Application JavaScript Engine (Universal Cross-Device Cloud-Sync & Bank Parser) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -1264,7 +1379,7 @@
                 { name: 'Utilities & Bills', allocated: 0, type: 'need' },
                 { name: 'Dining Out & Fun', allocated: 0, type: 'want' },
                 { name: 'Shopping & Leisure', allocated: 0, type: 'want' },
-                { name: 'Emergency & SIP', allocated: 0, type: 'saving' }
+                { name: 'Monthly SIPs & Investments', allocated: 0, type: 'saving' }
             ],
             expenses: [],
             recurringBills: [],
@@ -1292,6 +1407,8 @@
         let confirmCallback = null;
         let isUsernameCustom = false;
         let isSyncingToCloud = false;
+
+        let parsedStatementTransactions = [];
 
         let incomeExpenseChartInstance = null;
         let categoryPieChartInstance = null;
@@ -1432,21 +1549,18 @@
 
             // 3. Sync to Universal Cross-Device Cloud Store (works across laptops, phones, tablets)
             try {
-                // Post account document
                 await fetch(`${CLOUD_SYNC_ENDPOINT}/${docId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
-                // Link username handle in cloud directory
                 await fetch(`${CLOUD_DIRECTORY_ENDPOINT}/${docId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ docId: docId, username: userHandle, email: userEmail })
                 });
 
-                // Link email handle in cloud directory if provided
                 if (userEmail) {
                     const emailDocKey = normalizeAccountId(userEmail);
                     await fetch(`${CLOUD_DIRECTORY_ENDPOINT}/${emailDocKey}`, {
@@ -1499,7 +1613,6 @@
                         return snap.data();
                     }
 
-                    // Memory scan for email match
                     const accountsCol = collection(db, 'artifacts', appId, 'public', 'data', 'accounts');
                     const allSnaps = await getDocs(accountsCol);
                     for (const s of allSnaps.docs) {
@@ -1515,7 +1628,6 @@
 
             // 3. Check Universal Cross-Device Cloud Store
             try {
-                // Try direct docId fetch
                 const res = await fetch(`${CLOUD_SYNC_ENDPOINT}/${docId}`);
                 if (res.ok) {
                     const data = await res.json();
@@ -1524,7 +1636,6 @@
                     }
                 }
 
-                // Try directory lookup (especially for email or alias search)
                 const dirRes = await fetch(`${CLOUD_DIRECTORY_ENDPOINT}/${docId}`);
                 if (dirRes.ok) {
                     const dirData = await dirRes.json();
@@ -1541,14 +1652,13 @@
 
             return null;
         }
-/* Decode Google JWT credential token */
+
         function parseJwt(token) {
             const base64Url = token.split('.')[1];
             const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
             return JSON.parse(decodeURIComponent(escape(window.atob(base64))));
         }
 
-        /* Handle login after user approves Google popup */
         async function handleGoogleResponse(response) {
             try {
                 const user = parseJwt(response.credential);
@@ -1590,6 +1700,7 @@
                 showToast("Google sign-in failed. Please try again.", "fa-circle-exclamation");
             }
         }
+
         async function handleUniversalSignIn(event) {
             event.preventDefault();
             const identifierInput = document.getElementById('signin-identifier');
@@ -1694,7 +1805,6 @@
             errEl.classList.add('hidden');
 
             try {
-                // Check if username already exists in cloud
                 const existing = await fetchAccountFromCloud(username);
                 if (existing) {
                     errText.innerText = `Username "@${username}" is already taken. Please choose another username.`;
@@ -1702,7 +1812,6 @@
                     return;
                 }
 
-                // Check email conflict
                 const existingEmail = await fetchAccountFromCloud(email);
                 if (existingEmail) {
                     errText.innerText = `An account with "${email}" already exists. Please switch to Sign In.`;
@@ -1710,13 +1819,11 @@
                     return;
                 }
 
-                // Set active user state
                 activeAccountId = username;
                 activeAccountProfile = { name, username, email, identifier: username, pin, color };
                 appState = JSON.parse(JSON.stringify(defaultUserData));
                 appState.salary = 0;
 
-                // Propagate to cloud and local storage
                 await syncAccountToCloud();
 
                 completeLogin(normalizeAccountId(username));
@@ -1768,6 +1875,9 @@
             const settingsEmail = document.getElementById('settings-profile-email');
             if (settingsEmail) settingsEmail.innerText = `Login: ${userHandle} / ${activeAccountProfile.email || 'Email'}`;
 
+            syncDebtCategory();
+            syncSipCategory();
+
             renderAll();
             startCloudSyncListener(docId);
         }
@@ -1778,7 +1888,6 @@
                 unsubscribeActiveAccount = null;
             }
 
-            // 1. Firebase snapshot listener
             if (db && authUser) {
                 const accountDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'accounts', docId);
                 unsubscribeActiveAccount = onSnapshot(accountDocRef, (snap) => {
@@ -1793,7 +1902,6 @@
                 });
             }
 
-            // 2. Periodic cloud poller for updates made on other devices (e.g. phone <-> laptop)
             setInterval(async () => {
                 if (!activeAccountId || isSyncingToCloud) return;
                 try {
@@ -1822,6 +1930,8 @@
             const accounts = getStoredAccounts();
             accounts[activeAccountId] = data;
             saveStoredAccounts(accounts);
+            syncDebtCategory();
+            syncSipCategory();
             renderAll();
             showToast("Updated with latest changes from your other device!", "fa-arrows-rotate");
         }
@@ -2157,6 +2267,27 @@
             }
         }
 
+        function syncSipCategory() {
+            const totalSip = (appState.holdings || []).reduce((sum, h) => sum + (Number(h.sip) || 0), 0);
+            let sipCat = appState.categories.find(c => 
+                c.name.toLowerCase().includes('sip') || 
+                c.name.toLowerCase().includes('invest')
+            );
+
+            if (totalSip > 0) {
+                if (sipCat) {
+                    sipCat.allocated = totalSip;
+                    sipCat.type = 'saving';
+                } else {
+                    appState.categories.push({
+                        name: 'Monthly SIPs & Investments',
+                        allocated: totalSip,
+                        type: 'saving'
+                    });
+                }
+            }
+        }
+
         function apply503020Rule() {
             const mKey = getMonthKey(activeDate);
             const salary = appState.monthlySalaries[mKey] !== undefined ? appState.monthlySalaries[mKey] : appState.salary;
@@ -2171,11 +2302,13 @@
             const targetSavings = salary * 0.20;
 
             const totalEmi = (appState.debts || []).reduce((sum, d) => sum + (Number(d.emi) || 0), 0);
+            const totalSip = (appState.holdings || []).reduce((sum, h) => sum + (Number(h.sip) || 0), 0);
             syncDebtCategory();
+            syncSipCategory();
 
             const needsCats = appState.categories.filter(c => c.type === 'need' && !c.name.toLowerCase().includes('emi') && !c.name.toLowerCase().includes('loan'));
             const wantsCats = appState.categories.filter(c => c.type === 'want');
-            const savingsCats = appState.categories.filter(c => c.type === 'saving');
+            const savingsCats = appState.categories.filter(c => c.type === 'saving' && !c.name.toLowerCase().includes('sip') && !c.name.toLowerCase().includes('invest'));
 
             const remainingNeeds = Math.max(0, targetNeeds - totalEmi);
             if (needsCats.length > 0) {
@@ -2186,8 +2319,9 @@
                 const perWant = Math.round(targetWants / wantsCats.length);
                 wantsCats.forEach(c => c.allocated = perWant);
             }
+            const remainingSavings = Math.max(0, targetSavings - totalSip);
             if (savingsCats.length > 0) {
-                const perSave = Math.round(targetSavings / savingsCats.length);
+                const perSave = Math.round(remainingSavings / savingsCats.length);
                 savingsCats.forEach(c => c.allocated = perSave);
             }
 
@@ -2511,6 +2645,325 @@
             showToast(`Copied ${count} recurring bills to current expenses!`);
         }
 
+        function autoDetectCategory(merchantText) {
+            const txt = (merchantText || '').toLowerCase();
+            const existingCatNames = (appState.categories || []).map(c => c.name);
+
+            function findUserCat(keyword, fallback) {
+                const found = existingCatNames.find(c => c.toLowerCase().includes(keyword.toLowerCase()));
+                return found || fallback;
+            }
+
+            // Food & Dining Out
+            if (/swiggy|zomato|mcdonald|starbucks|kfc|burger|domino|pizza|cafe|restaurant|subway|barista|haldiram|bikanervala|eats|dine|bakery/.test(txt)) {
+                return findUserCat('dining', findUserCat('food', 'Dining Out & Fun'));
+            }
+
+            // Groceries & Daily Essentials
+            if (/blinkit|zepto|instamart|bbdaily|bigbasket|dmart|spencer|reliance fresh|nature basket|milk|dairy|mother dairy|amul|veggie|fruit|supermarket|kirana|provision/.test(txt)) {
+                return findUserCat('grocer', findUserCat('food', 'Groceries & Food'));
+            }
+
+            // Utilities, Fuel & Travel
+            if (/bescom|tata power|adani|electricity|airtel|jio|vodafone|vi telecom|bsnl|broadband|wifi|water|igl|indane|hpcl|bpcl|iocl|petrol|fuel|diesel|fastag|toll|recharge|metro|uber|ola|rapido/.test(txt)) {
+                return findUserCat('utilit', findUserCat('bill', 'Utilities & Bills'));
+            }
+
+            // Shopping & Entertainment
+            if (/amazon|flipkart|myntra|nykaa|ajio|meesho|tata cliq|zara|h&m|westside|pantaloons|croma|vijay sales|reliance digital|netflix|spotify|prime video|hotstar|apple\.com|google play|youtube|pvr|inox|bookmyshow/.test(txt)) {
+                return findUserCat('shop', findUserCat('want', 'Shopping & Leisure'));
+            }
+
+            // Investments, Stocks & SIP
+            if (/zerodha|groww|angelone|upstox|kuvera|mutual fund|sip|cams|kfintech|uti mf|nippon|sbi mutual|hdfc mutual|ppf|nps/.test(txt)) {
+                return findUserCat('sip', findUserCat('invest', 'Monthly SIPs & Investments'));
+            }
+
+            // Loans & EMIs
+            if (/loan|emi|hdfc bank ltd loan|bajaj finance|cred|credit card|sbi card|icici card|axis card/.test(txt)) {
+                return findUserCat('emi', findUserCat('loan', 'Loans & EMIs'));
+            }
+
+            // Healthcare & Medical
+            if (/apollo|pharmeasy|1mg|netmeds|medplus|hospital|clinic|diagnostic|pathology|dr\.|pharmacy/.test(txt)) {
+                return findUserCat('health', findUserCat('medical', 'Utilities & Bills'));
+            }
+
+            // Rent & Housing
+            if (/rent|maintenance|society|nobroker|magicbricks/.test(txt)) {
+                return findUserCat('rent', findUserCat('hous', 'Rent / Housing'));
+            }
+
+            return existingCatNames[0] || 'Miscellaneous';
+        }
+
+        function openStatementModal() {
+            resetStatementReader();
+            document.getElementById('statement-modal')?.classList.remove('hidden');
+        }
+
+        function closeStatementModal() {
+            document.getElementById('statement-modal')?.classList.add('hidden');
+        }
+
+        function resetStatementReader() {
+            parsedStatementTransactions = [];
+            const uploadStep = document.getElementById('statement-upload-step');
+            const reviewStep = document.getElementById('statement-review-step');
+            const spinner = document.getElementById('statement-reading-spinner');
+            const fileInput = document.getElementById('statement-file-input');
+
+            if (uploadStep) uploadStep.classList.remove('hidden');
+            if (reviewStep) reviewStep.classList.add('hidden');
+            if (spinner) spinner.classList.add('hidden');
+            if (fileInput) fileInput.value = '';
+        }
+
+        async function handleStatementFileSelected(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const spinner = document.getElementById('statement-reading-spinner');
+            if (spinner) spinner.classList.remove('hidden');
+
+            const password = document.getElementById('statement-pdf-password')?.value || '';
+
+            try {
+                if (file.name.toLowerCase().endsWith('.pdf')) {
+                    await parsePdfStatementFile(file, password);
+                } else {
+                    await parseCsvStatementFile(file);
+                }
+            } catch (err) {
+                console.error("Statement read error:", err);
+                showToast(err.message || "Could not parse statement. Check password if protected.", "fa-triangle-exclamation");
+                if (spinner) spinner.classList.add('hidden');
+            }
+        }
+
+        async function parsePdfStatementFile(file, password) {
+            if (typeof pdfjsLib === 'undefined') {
+                throw new Error("PDF parser loading, please retry in 2 seconds.");
+            }
+
+            const arrayBuffer = await file.arrayBuffer();
+            const loadingTask = pdfjsLib.getDocument({
+                data: arrayBuffer,
+                password: password
+            });
+
+            const pdfDoc = await loadingTask.promise;
+            let fullText = "";
+
+            for (let p = 1; p <= pdfDoc.numPages; p++) {
+                const page = await pdfDoc.getPage(p);
+                const textContent = await page.getTextContent();
+                const pageStr = textContent.items.map(item => item.str).join(' ');
+                fullText += "\n" + pageStr;
+            }
+
+            extractTransactionsFromStatementText(fullText);
+        }
+
+        async function parseCsvStatementFile(file) {
+            const text = await file.text();
+            const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
+            if (lines.length < 2) throw new Error("CSV statement has no data rows.");
+
+            const rows = lines.map(line => line.split(',').map(c => c.trim().replace(/^["']|["']$/g, '')));
+            const header = rows[0].map(h => h.toLowerCase());
+
+            const dateIdx = header.findIndex(h => h.includes('date') || h.includes('txn date'));
+            const descIdx = header.findIndex(h => h.includes('narration') || h.includes('description') || h.includes('particular') || h.includes('remark') || h.includes('note'));
+            const debitIdx = header.findIndex(h => h.includes('debit') || h.includes('withdrawal') || h.includes('dr'));
+            const amountIdx = header.findIndex(h => h.includes('amount'));
+
+            const extracted = [];
+            const today = new Date().toISOString().split('T')[0];
+
+            for (let i = 1; i < rows.length; i++) {
+                const r = rows[i];
+                let amt = 0;
+
+                if (debitIdx !== -1 && r[debitIdx]) {
+                    amt = parseFloat(r[debitIdx].replace(/[^\d.]/g, ''));
+                } else if (amountIdx !== -1 && r[amountIdx]) {
+                    amt = parseFloat(r[amountIdx].replace(/[^\d.]/g, ''));
+                }
+
+                if (!isNaN(amt) && amt > 0) {
+                    const desc = (descIdx !== -1 && r[descIdx]) ? r[descIdx] : 'Debit Transaction';
+                    let dateStr = (dateIdx !== -1 && r[dateIdx]) ? r[dateIdx] : today;
+                    dateStr = normalizeDateString(dateStr);
+
+                    extracted.push({
+                        id: 'stmt_' + Date.now() + '_' + i,
+                        date: dateStr,
+                        note: cleanMerchantNarration(desc),
+                        amount: amt,
+                        category: autoDetectCategory(desc),
+                        tag: 'Need',
+                        selected: true
+                    });
+                }
+            }
+
+            if (extracted.length === 0) {
+                throw new Error("No debit transactions found in CSV file.");
+            }
+
+            displayParsedStatementReview(extracted);
+        }
+
+        function extractTransactionsFromStatementText(text) {
+            const today = new Date().toISOString().split('T')[0];
+            const dateRegex = /(\b\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}\b|\b\d{1,2}-[A-Za-z]{3}-\d{2,4}\b)/g;
+            const matches = [];
+            const lines = text.split('\n');
+
+            lines.forEach(line => {
+                const dates = line.match(dateRegex);
+                const amounts = line.match(/\b\d{1,3}(?:,\d{2,3})*(?:\.\d{2})\b/g);
+
+                if (dates && amounts && dates.length > 0 && amounts.length > 0) {
+                    const amtStr = amounts[0].replace(/,/g, '');
+                    const amt = parseFloat(amtStr);
+
+                    if (!isNaN(amt) && amt > 0 && amt < 5000000) {
+                        const cleanLine = line.replace(dates[0], '').replace(amounts[0], '').trim();
+                        matches.push({
+                            id: 'stmt_' + Date.now() + '_' + matches.length,
+                            date: normalizeDateString(dates[0]),
+                            note: cleanMerchantNarration(cleanLine.substring(0, 50)) || 'Debit Expense',
+                            amount: amt,
+                            category: autoDetectCategory(cleanLine),
+                            tag: 'Need',
+                            selected: true
+                        });
+                    }
+                }
+            });
+
+            if (matches.length === 0) {
+                throw new Error("Could not detect tabular debit entries. Ensure statement is unlocked.");
+            }
+
+            displayParsedStatementReview(matches);
+        }
+
+        function cleanMerchantNarration(raw) {
+            if (!raw) return 'Bank Transaction';
+            let cleaned = raw.replace(/\b(UPI|NEFT|IMPS|POS|INB|REV|ATM|TRANSFER)\b/gi, '')
+                             .replace(/[0-9]{6,}/g, '')
+                             .replace(/[\/\-_]/g, ' ')
+                             .replace(/\s+/g, ' ')
+                             .trim();
+            return cleaned.length > 2 ? cleaned : raw.substring(0, 35);
+        }
+
+        function normalizeDateString(rawDate) {
+            try {
+                const parts = rawDate.split(/[\/\-\.]/);
+                if (parts.length === 3) {
+                    let d = parts[0].padStart(2, '0');
+                    let m = parts[1];
+                    let y = parts[2];
+                    if (y.length === 2) y = '20' + y;
+
+                    const monthMap = { jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06', jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12' };
+                    if (isNaN(Number(m)) && monthMap[m.toLowerCase().substring(0, 3)]) {
+                        m = monthMap[m.toLowerCase().substring(0, 3)];
+                    } else {
+                        m = m.padStart(2, '0');
+                    }
+                    return `${y}-${m}-${d}`;
+                }
+            } catch (e) {}
+            return new Date().toISOString().split('T')[0];
+        }
+
+        function displayParsedStatementReview(transactions) {
+            parsedStatementTransactions = transactions;
+            const uploadStep = document.getElementById('statement-upload-step');
+            const reviewStep = document.getElementById('statement-review-step');
+            const spinner = document.getElementById('statement-reading-spinner');
+            const summaryText = document.getElementById('statement-summary-text');
+            const tbody = document.getElementById('statement-transactions-body');
+
+            if (spinner) spinner.classList.add('hidden');
+            if (uploadStep) uploadStep.classList.add('hidden');
+            if (reviewStep) reviewStep.classList.remove('hidden');
+
+            const totalDebit = transactions.reduce((s, t) => s + t.amount, 0);
+            if (summaryText) {
+                summaryText.innerText = `Detected ${transactions.length} debits totalling ${formatINR(totalDebit)}`;
+            }
+
+            if (!tbody) return;
+            const categories = appState.categories || defaultUserData.categories;
+
+            tbody.innerHTML = transactions.map((t, idx) => `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition">
+                    <td class="p-2.5 text-center">
+                        <input type="checkbox" onchange="toggleStatementItemCheck(${idx}, this.checked)" ${t.selected ? 'checked' : ''} class="accent-brand-600 rounded">
+                    </td>
+                    <td class="p-2.5 text-slate-500 whitespace-nowrap">${t.date}</td>
+                    <td class="p-2.5 font-semibold text-slate-800 dark:text-slate-100">${t.note}</td>
+                    <td class="p-2.5">
+                        <select onchange="updateStatementCategory(${idx}, this.value)" class="w-full px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs outline-none">
+                            ${categories.map(c => `<option value="${c.name}" ${c.name === t.category ? 'selected' : ''}>${c.name}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td class="p-2.5 text-right font-bold text-slate-900 dark:text-white whitespace-nowrap">${formatINR(t.amount)}</td>
+                </tr>
+            `).join('');
+        }
+
+        function updateStatementCategory(idx, newCategory) {
+            if (parsedStatementTransactions[idx]) {
+                parsedStatementTransactions[idx].category = newCategory;
+            }
+        }
+
+        function toggleStatementItemCheck(idx, checked) {
+            if (parsedStatementTransactions[idx]) {
+                parsedStatementTransactions[idx].selected = checked;
+            }
+        }
+
+        function toggleSelectAllStatement(checked) {
+            parsedStatementTransactions.forEach(t => t.selected = checked);
+            const masterCheck = document.getElementById('statement-master-check');
+            if (masterCheck) masterCheck.checked = checked;
+            const checkboxes = document.querySelectorAll('#statement-transactions-body input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = checked);
+        }
+
+        function confirmImportStatementTransactions() {
+            const selected = parsedStatementTransactions.filter(t => t.selected);
+            if (selected.length === 0) {
+                showToast("Please select at least one transaction to import", "fa-circle-exclamation");
+                return;
+            }
+
+            selected.forEach(t => {
+                appState.expenses.unshift({
+                    id: 'exp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                    amount: t.amount,
+                    date: t.date,
+                    note: t.note,
+                    category: t.category,
+                    payment: 'Net Banking',
+                    tag: t.tag || 'Need'
+                });
+            });
+
+            syncAccountToCloud();
+            closeStatementModal();
+            renderAll();
+            showToast(`Imported ${selected.length} transactions from bank statement!`);
+        }
+
         function openAddHoldingModal(editIdx = null) {
             const title = document.getElementById('holding-modal-title');
             const editIdxEl = document.getElementById('holding-edit-idx');
@@ -2524,6 +2977,7 @@
                 document.getElementById('holding-type').value = h.type;
                 document.getElementById('holding-invested').value = h.invested;
                 document.getElementById('holding-current').value = h.current;
+                document.getElementById('holding-sip').value = h.sip || '';
             } else {
                 if (title) title.innerText = "Add Investment Holding";
                 if (editIdxEl) editIdxEl.value = "";
@@ -2543,22 +2997,24 @@
             const type = document.getElementById('holding-type')?.value;
             const invested = Number(document.getElementById('holding-invested')?.value) || 0;
             const current = Number(document.getElementById('holding-current')?.value) || 0;
+            const sip = Number(document.getElementById('holding-sip')?.value) || 0;
 
             if (!name) return;
 
             if (editIdx !== "") {
                 const idx = parseInt(editIdx);
                 if (appState.holdings[idx]) {
-                    appState.holdings[idx] = { name, type, invested, current };
+                    appState.holdings[idx] = { name, type, invested, current, sip };
                 }
             } else {
-                appState.holdings.push({ name, type, invested, current });
+                appState.holdings.push({ name, type, invested, current, sip });
             }
 
+            syncSipCategory();
             syncAccountToCloud();
             closeHoldingModal();
             renderAll();
-            showToast("Investment holding saved!");
+            showToast("Investment holding saved & SIP synced to Budget!");
         }
 
         function deleteHolding(idx) {
@@ -2569,6 +3025,7 @@
                 `Remove "${h.name}" from your portfolio?`,
                 () => {
                     appState.holdings.splice(idx, 1);
+                    syncSipCategory();
                     syncAccountToCloud();
                     renderAll();
                     showToast("Holding removed");
@@ -2729,7 +3186,7 @@
             const p = Number(slider?.value) || 10000;
             if (amountEl) amountEl.innerText = `${formatINR(p)} /mo`;
 
-            const r = 0.12 / 12; // 12% annual return compounded monthly
+            const r = 0.12 / 12;
             function compound(months) {
                 return p * (((Math.pow(1 + r, months) - 1) / r)) * (1 + r);
             }
@@ -2767,6 +3224,8 @@
                 try {
                     const parsed = JSON.parse(e.target.result);
                     appState = Object.assign({}, JSON.parse(JSON.stringify(defaultUserData)), parsed);
+                    syncDebtCategory();
+                    syncSipCategory();
                     syncAccountToCloud();
                     renderAll();
                     showToast("Data backup successfully restored & synced!");
@@ -2782,6 +3241,9 @@
             const mKey = getMonthKey(activeDate);
             const mName = getMonthName(activeDate);
             const currentRealKey = getMonthKey(new Date());
+
+            syncDebtCategory();
+            syncSipCategory();
 
             const currentBadge = document.getElementById('current-month-badge');
             if (currentBadge) currentBadge.innerText = mName;
@@ -2981,7 +3443,7 @@
             const holdings = appState.holdings || [];
             const totalInvested = holdings.reduce((sum, h) => sum + (Number(h.invested) || 0), 0);
             const totalCurrent = holdings.reduce((sum, h) => sum + (Number(h.current) || 0), 0);
-            const totalSip = holdings.filter(h => (h.type || '').toLowerCase().includes('sip') || (h.type || '').toLowerCase().includes('mutual fund')).reduce((sum, h) => sum + 5000, 0);
+            const totalSip = holdings.reduce((sum, h) => sum + (Number(h.sip) || 0), 0);
 
             const valEl = document.getElementById('inv-total-value');
             if (valEl) valEl.innerText = formatINR(totalCurrent);
@@ -3002,7 +3464,7 @@
             if (!tbody) return;
 
             if (holdings.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-xs text-slate-400">No investment holdings added yet.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-xs text-slate-400">No investment holdings added yet.</td></tr>`;
                 return;
             }
 
@@ -3015,6 +3477,7 @@
                         <td class="py-3 text-xs text-slate-500">${h.type}</td>
                         <td class="py-3 font-semibold">${formatINR(h.invested)}</td>
                         <td class="py-3 font-bold">${formatINR(h.current)}</td>
+                        <td class="py-3 font-semibold text-blue-600">${h.sip > 0 ? formatINR(h.sip) + '<span class="text-[10px] text-slate-400">/mo</span>' : '<span class="text-slate-400">—</span>'}</td>
                         <td class="py-3 text-right ${diff >= 0 ? 'text-brand-600' : 'text-red-500'} font-semibold">
                             ${diff >= 0 ? '+' : ''}${formatINR(diff)} (${pct}%)
                         </td>
@@ -3039,6 +3502,11 @@
                 nwEl.innerText = formatINR(netWorth);
                 nwEl.className = `text-2xl font-bold ${netWorth < 0 ? 'text-red-500' : 'text-brand-600'}`;
             }
+
+            const nwAssetsEl = document.getElementById('net-worth-assets');
+            if (nwAssetsEl) nwAssetsEl.innerText = `Assets: ${formatINR(holdingsVal)}`;
+            const nwDebtsEl = document.getElementById('net-worth-debts');
+            if (nwDebtsEl) nwDebtsEl.innerText = `Debts: -${formatINR(totalDebt)}`;
 
             const goalsContainer = document.getElementById('goals-list');
             if (!goalsContainer) return;
@@ -3374,14 +3842,22 @@
             closeConfirmModal,
             handleConfirmAccept,
             showToast,
-            triggerImmediateCloudSync
+            triggerImmediateCloudSync,
+            openStatementModal,
+            closeStatementModal,
+            resetStatementReader,
+            handleStatementFileSelected,
+            updateStatementCategory,
+            toggleStatementItemCheck,
+            toggleSelectAllStatement,
+            confirmImportStatementTransactions,
+            syncSipCategory
         });
 
         window.onload = async function() {
             await initCloudEngine();
             runSimulator();
 
-            // 1. Check if there is already an active session cached on this device
             const activeUser = localStorage.getItem(STORAGE_KEY_ACTIVE_USER);
             const stored = getStoredAccounts();
 
@@ -3393,7 +3869,6 @@
 
                 completeLogin(normalizeAccountId(activeAccountId));
 
-                // Background check if newer cloud version exists
                 fetchAccountFromCloud(activeAccountId).then(cloudData => {
                     if (cloudData && cloudData.updatedAt && cloudData.updatedAt > (appState.updatedAt || '')) {
                         mergeRemoteData(cloudData);
@@ -3402,7 +3877,6 @@
                 return;
             }
 
-            // 2. Otherwise display Universal Cloud Login modal
             document.getElementById('universal-auth-modal')?.classList.remove('hidden');
             renderDeviceAccountsList();
         };
