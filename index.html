@@ -528,19 +528,28 @@
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                             <div class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-2xl border border-slate-200 dark:border-slate-700">
-                                <span class="text-xs font-semibold text-slate-500">Needs (Target: 50%)</span>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-semibold text-slate-500">Needs (Target: 50%)</span>
+                                    <span id="budget-need-badge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">0%</span>
+                                </div>
                                 <div id="budget-need-total" class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">₹0</div>
-                                <span class="text-xs text-brand-600 mt-1 block">Rent, Groceries, Utilities, EMIs</span>
+                                <span id="budget-need-sub" class="text-xs text-brand-600 mt-1 block">Rent, Groceries, Utilities, EMIs</span>
                             </div>
                             <div class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-2xl border border-slate-200 dark:border-slate-700">
-                                <span class="text-xs font-semibold text-slate-500">Wants (Target: 30%)</span>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-semibold text-slate-500">Wants (Target: 30%)</span>
+                                    <span id="budget-want-badge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">0%</span>
+                                </div>
                                 <div id="budget-want-total" class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">₹0</div>
-                                <span class="text-xs text-amber-600 mt-1 block">Dining out, Shopping, Subscriptions</span>
+                                <span id="budget-want-sub" class="text-xs text-amber-600 mt-1 block">Dining out, Shopping, Subscriptions</span>
                             </div>
                             <div class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-2xl border border-slate-200 dark:border-slate-700">
-                                <span class="text-xs font-semibold text-slate-500">Savings (Target: 20%)</span>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-semibold text-slate-500">Savings (Target: 20%)</span>
+                                    <span id="budget-save-badge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">0%</span>
+                                </div>
                                 <div id="budget-save-total" class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">₹0</div>
-                                <span class="text-xs text-blue-600 mt-1 block">Monthly SIPs, PPF, Emergency Fund</span>
+                                <span id="budget-save-sub" class="text-xs text-blue-600 mt-1 block">Monthly SIPs, PPF, Emergency Fund</span>
                             </div>
                         </div>
                         <div id="unallocated-banner" class="p-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/50 rounded-xl flex items-center justify-between">
@@ -576,6 +585,7 @@
                                 <option value="">All Tags</option>
                                 <option value="Need">Need</option>
                                 <option value="Want">Want</option>
+                                <option value="Saving">Saving / SIP</option>
                                 <option value="Regret">Regret</option>
                             </select>
                             <label class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 cursor-pointer select-none bg-slate-50 dark:bg-slate-900 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700">
@@ -986,7 +996,7 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Category</label>
-                        <select id="exp-category" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none">
+                        <select id="exp-category" onchange="onExpenseCategoryChange(this.value)" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none">
                             <!-- Dynamic from user categories -->
                         </select>
                     </div>
@@ -1003,12 +1013,15 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Spending Tag</label>
-                    <div class="grid grid-cols-3 gap-2">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         <label class="flex items-center justify-center p-2 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-brand-50 dark:hover:bg-slate-700 font-medium text-xs">
                             <input type="radio" name="exp-tag" value="Need" checked class="mr-1.5 accent-brand-600"> Need
                         </label>
                         <label class="flex items-center justify-center p-2 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-amber-50 dark:hover:bg-slate-700 font-medium text-xs">
                             <input type="radio" name="exp-tag" value="Want" class="mr-1.5 accent-amber-500"> Want
+                        </label>
+                        <label class="flex items-center justify-center p-2 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-blue-50 dark:hover:bg-slate-700 font-medium text-xs">
+                            <input type="radio" name="exp-tag" value="Saving" class="mr-1.5 accent-blue-600"> Saving / SIP
                         </label>
                         <label class="flex items-center justify-center p-2 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-red-50 dark:hover:bg-slate-700 font-medium text-xs">
                             <input type="radio" name="exp-tag" value="Regret" class="mr-1.5 accent-red-500"> Regret
@@ -1163,11 +1176,17 @@
         </div>
     </div>
 
-    <!-- Add / Edit Category Modal -->
+    <!-- Add / Edit Category Modal with Month Scope -->
     <div id="category-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center hidden p-4">
         <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-700">
-            <div class="flex justify-between items-center mb-4">
-                <h3 id="category-modal-title" class="font-bold text-lg">Add Budget Category</h3>
+            <div class="flex justify-between items-center mb-3">
+                <div>
+                    <h3 id="category-modal-title" class="font-bold text-lg">Add Budget Category</h3>
+                    <p class="text-xs text-brand-600 dark:text-brand-400 font-semibold mt-0.5 flex items-center gap-1.5">
+                        <i class="fa-solid fa-calendar-check text-[11px]"></i>
+                        <span id="cat-modal-month-badge">Current Month</span>
+                    </p>
+                </div>
                 <button onclick="closeCategoryModal()" class="text-slate-400 hover:text-slate-600 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <form id="category-form" onsubmit="handleCategorySubmit(event)" class="space-y-4">
@@ -1187,6 +1206,26 @@
                         <option value="want">Want (30% target - dining, leisure, hobbies)</option>
                         <option value="saving">Saving (20% target - SIP, investments, PF)</option>
                     </select>
+                </div>
+                <!-- Month Scope: Stay in this month vs Carry Forward -->
+                <div class="p-3 bg-slate-50 dark:bg-slate-700/40 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <span class="block text-xs font-semibold text-slate-500 uppercase mb-2">Month Scope</span>
+                    <div class="space-y-2.5">
+                        <label class="flex items-start gap-2.5 cursor-pointer text-xs select-none">
+                            <input type="radio" name="cat-scope" value="this-month" id="cat-scope-this-month" checked class="accent-brand-600 mt-0.5">
+                            <div>
+                                <span class="font-semibold text-slate-800 dark:text-slate-200 block">Only in <span id="cat-modal-month-name">this month</span></span>
+                                <span class="text-[10px] text-slate-400">One-off / special category. Won't clutter future months.</span>
+                            </div>
+                        </label>
+                        <label class="flex items-start gap-2.5 cursor-pointer text-xs select-none">
+                            <input type="radio" name="cat-scope" value="future-months" id="cat-scope-future-months" class="accent-brand-600 mt-0.5">
+                            <div>
+                                <span class="font-semibold text-slate-800 dark:text-slate-200 block">Carry forward to future months as well</span>
+                                <span class="text-[10px] text-slate-400">Standard recurring category that continues every month.</span>
+                            </div>
+                        </label>
+                    </div>
                 </div>
                 <button type="submit" id="cat-submit-btn" class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-2xl shadow-lg transition">Save Category</button>
             </form>
@@ -1370,6 +1409,7 @@
         const defaultUserData = {
             salary: 0,
             monthlySalaries: {},
+            monthlyCategories: {},
             pin: '',
             isLocked: false,
             darkMode: false,
@@ -1522,6 +1562,7 @@
                 salary: appState.salary || 0,
                 monthlySalaries: appState.monthlySalaries || {},
                 categories: appState.categories || defaultUserData.categories,
+                monthlyCategories: appState.monthlyCategories || {},
                 expenses: appState.expenses || [],
                 recurringBills: appState.recurringBills || [],
                 holdings: appState.holdings || [],
@@ -1920,6 +1961,7 @@
             appState.salary = data.salary !== undefined ? data.salary : appState.salary;
             appState.monthlySalaries = data.monthlySalaries || appState.monthlySalaries;
             appState.categories = data.categories || appState.categories;
+            appState.monthlyCategories = data.monthlyCategories || appState.monthlyCategories || {};
             appState.expenses = data.expenses || appState.expenses;
             appState.recurringBills = data.recurringBills || appState.recurringBills;
             appState.holdings = data.holdings || appState.holdings;
@@ -2249,27 +2291,46 @@
             showToast("Security PIN updated and synced to all devices!");
         }
 
+        /* Retrieve categories for a given month with fallback cloning from template */
+        function getCategoriesForMonth(mKey = getMonthKey(activeDate)) {
+            if (!appState.monthlyCategories) {
+                appState.monthlyCategories = {};
+            }
+            if (!appState.monthlyCategories[mKey] || !Array.isArray(appState.monthlyCategories[mKey])) {
+                const source = (appState.categories && appState.categories.length > 0)
+                    ? appState.categories
+                    : defaultUserData.categories;
+                appState.monthlyCategories[mKey] = JSON.parse(JSON.stringify(source));
+            }
+            return appState.monthlyCategories[mKey];
+        }
+
         function syncDebtCategory() {
+            const mKey = getMonthKey(activeDate);
+            const categories = getCategoriesForMonth(mKey);
             const totalEmi = (appState.debts || []).reduce((sum, d) => sum + (Number(d.emi) || 0), 0);
-            let debtCat = appState.categories.find(c => c.name.toLowerCase().includes('emi') || c.name.toLowerCase().includes('loan'));
+            let debtCat = categories.find(c => c.name.toLowerCase().includes('emi') || c.name.toLowerCase().includes('loan'));
 
             if (totalEmi > 0) {
                 if (debtCat) {
                     debtCat.allocated = totalEmi;
                     debtCat.type = 'need';
                 } else {
-                    appState.categories.unshift({
+                    categories.unshift({
                         name: 'Loans & EMIs',
                         allocated: totalEmi,
-                        type: 'need'
+                        type: 'need',
+                        scope: 'permanent'
                     });
                 }
             }
         }
 
         function syncSipCategory() {
+            const mKey = getMonthKey(activeDate);
+            const categories = getCategoriesForMonth(mKey);
             const totalSip = (appState.holdings || []).reduce((sum, h) => sum + (Number(h.sip) || 0), 0);
-            let sipCat = appState.categories.find(c => 
+            let sipCat = categories.find(c => 
                 c.name.toLowerCase().includes('sip') || 
                 c.name.toLowerCase().includes('invest')
             );
@@ -2279,10 +2340,11 @@
                     sipCat.allocated = totalSip;
                     sipCat.type = 'saving';
                 } else {
-                    appState.categories.push({
+                    categories.push({
                         name: 'Monthly SIPs & Investments',
                         allocated: totalSip,
-                        type: 'saving'
+                        type: 'saving',
+                        scope: 'permanent'
                     });
                 }
             }
@@ -2306,9 +2368,11 @@
             syncDebtCategory();
             syncSipCategory();
 
-            const needsCats = appState.categories.filter(c => c.type === 'need' && !c.name.toLowerCase().includes('emi') && !c.name.toLowerCase().includes('loan'));
-            const wantsCats = appState.categories.filter(c => c.type === 'want');
-            const savingsCats = appState.categories.filter(c => c.type === 'saving' && !c.name.toLowerCase().includes('sip') && !c.name.toLowerCase().includes('invest'));
+            const categories = getCategoriesForMonth(mKey);
+
+            const needsCats = categories.filter(c => c.type === 'need' && !c.name.toLowerCase().includes('emi') && !c.name.toLowerCase().includes('loan'));
+            const wantsCats = categories.filter(c => c.type === 'want');
+            const savingsCats = categories.filter(c => c.type === 'saving' && !c.name.toLowerCase().includes('sip') && !c.name.toLowerCase().includes('invest'));
 
             const remainingNeeds = Math.max(0, targetNeeds - totalEmi);
             if (needsCats.length > 0) {
@@ -2334,18 +2398,36 @@
             const form = document.getElementById('category-form');
             const title = document.getElementById('category-modal-title');
             const editIdxEl = document.getElementById('cat-edit-idx');
+            const monthBadge = document.getElementById('cat-modal-month-badge');
+            const monthName = document.getElementById('cat-modal-month-name');
+            const currentMName = getMonthName(activeDate);
 
-            if (editIdx !== null && appState.categories[editIdx]) {
-                const cat = appState.categories[editIdx];
+            if (monthBadge) monthBadge.innerText = currentMName;
+            if (monthName) monthName.innerText = currentMName;
+
+            const mKey = getMonthKey(activeDate);
+            const categories = getCategoriesForMonth(mKey);
+
+            if (editIdx !== null && categories[editIdx]) {
+                const cat = categories[editIdx];
                 if (title) title.innerText = "Edit Category";
                 if (editIdxEl) editIdxEl.value = editIdx;
                 document.getElementById('cat-name').value = cat.name;
                 document.getElementById('cat-allocation').value = cat.allocated;
                 document.getElementById('cat-type').value = cat.type;
+                const isMonthOnly = cat.scope === 'this-month';
+                const rThis = document.getElementById('cat-scope-this-month');
+                const rFuture = document.getElementById('cat-scope-future-months');
+                if (rThis && rFuture) {
+                    if (isMonthOnly) rThis.checked = true;
+                    else rFuture.checked = true;
+                }
             } else {
-                if (title) title.innerText = "Add Budget Category";
+                if (title) title.innerText = `Add Category for ${currentMName}`;
                 if (editIdxEl) editIdxEl.value = "";
                 if (form) form.reset();
+                const rThis = document.getElementById('cat-scope-this-month');
+                if (rThis) rThis.checked = true;
             }
             document.getElementById('category-modal')?.classList.remove('hidden');
         }
@@ -2360,34 +2442,123 @@
             const name = document.getElementById('cat-name')?.value.trim();
             const allocated = Number(document.getElementById('cat-allocation')?.value) || 0;
             const type = document.getElementById('cat-type')?.value || 'need';
+            const scope = document.querySelector('input[name="cat-scope"]:checked')?.value || 'this-month';
 
             if (!name) return;
 
+            const mKey = getMonthKey(activeDate);
+            const categories = getCategoriesForMonth(mKey);
+
+            const catObj = {
+                name,
+                allocated,
+                type,
+                scope: scope === 'this-month' ? 'this-month' : 'permanent'
+            };
+
             if (editIdx !== "") {
                 const idx = parseInt(editIdx);
-                if (appState.categories[idx]) {
-                    appState.categories[idx].name = name;
-                    appState.categories[idx].allocated = allocated;
-                    appState.categories[idx].type = type;
+                if (categories[idx]) {
+                    categories[idx].name = name;
+                    categories[idx].allocated = allocated;
+                    categories[idx].type = type;
+                    categories[idx].scope = catObj.scope;
                 }
             } else {
-                appState.categories.push({ name, allocated, type });
+                categories.push(catObj);
+            }
+
+            // Carry forward to future months if selected
+            if (scope === 'future-months') {
+                if (!appState.categories) appState.categories = [];
+                const baseIdx = appState.categories.findIndex(c => c.name.toLowerCase() === name.toLowerCase());
+                if (baseIdx !== -1) {
+                    appState.categories[baseIdx] = { name, allocated, type };
+                } else {
+                    appState.categories.push({ name, allocated, type });
+                }
+
+                // Propagate to any future months already opened in monthlyCategories
+                if (appState.monthlyCategories) {
+                    Object.keys(appState.monthlyCategories).forEach(otherKey => {
+                        if (otherKey > mKey) {
+                            const otherCats = appState.monthlyCategories[otherKey];
+                            const existing = otherCats.find(c => c.name.toLowerCase() === name.toLowerCase());
+                            if (existing) {
+                                existing.name = name;
+                                existing.allocated = allocated;
+                                existing.type = type;
+                                existing.scope = 'permanent';
+                            } else {
+                                otherCats.push({ name, allocated, type, scope: 'permanent' });
+                            }
+                        }
+                    });
+                }
             }
 
             syncAccountToCloud();
             closeCategoryModal();
             renderAll();
-            showToast("Category saved!");
+            showToast(scope === 'this-month' ? `Category saved for ${getMonthName(activeDate)} only!` : "Category saved and carried forward to future months!");
+        }
+
+        /* 1-Tap Carry Forward for a month-specific category */
+        function carryCategoryForward(idx) {
+            const mKey = getMonthKey(activeDate);
+            const categories = getCategoriesForMonth(mKey);
+            const cat = categories[idx];
+            if (!cat) return;
+
+            cat.scope = 'permanent';
+
+            if (!appState.categories) appState.categories = [];
+            const baseIdx = appState.categories.findIndex(c => c.name.toLowerCase() === cat.name.toLowerCase());
+            if (baseIdx !== -1) {
+                appState.categories[baseIdx] = { name: cat.name, allocated: cat.allocated, type: cat.type };
+            } else {
+                appState.categories.push({ name: cat.name, allocated: cat.allocated, type: cat.type });
+            }
+
+            if (appState.monthlyCategories) {
+                Object.keys(appState.monthlyCategories).forEach(otherKey => {
+                    if (otherKey > mKey) {
+                        const otherCats = appState.monthlyCategories[otherKey];
+                        const existing = otherCats.find(c => c.name.toLowerCase() === cat.name.toLowerCase());
+                        if (existing) {
+                            existing.name = cat.name;
+                            existing.allocated = cat.allocated;
+                            existing.type = cat.type;
+                            existing.scope = 'permanent';
+                        } else {
+                            otherCats.push({ name: cat.name, allocated: cat.allocated, type: cat.type, scope: 'permanent' });
+                        }
+                    }
+                });
+            }
+
+            syncAccountToCloud();
+            renderAll();
+            showToast(`"${cat.name}" carried forward to future months!`);
         }
 
         function deleteCategory(idx) {
-            if (!appState.categories[idx]) return;
-            const name = appState.categories[idx].name;
+            const mKey = getMonthKey(activeDate);
+            const categories = getCategoriesForMonth(mKey);
+            if (!categories[idx]) return;
+            const name = categories[idx].name;
+            const isMonthOnly = categories[idx].scope === 'this-month';
+
             showConfirmModal(
                 "Delete Category",
-                `Delete "${name}" from budget categories? Existing expenses will retain their label.`,
+                isMonthOnly
+                    ? `Delete "${name}" from ${getMonthName(activeDate)} only?`
+                    : `Delete "${name}" from ${getMonthName(activeDate)}?`,
                 () => {
-                    appState.categories.splice(idx, 1);
+                    categories.splice(idx, 1);
+                    if (!isMonthOnly && appState.categories) {
+                        appState.categories = appState.categories.filter(c => c.name.toLowerCase() !== name.toLowerCase());
+                    }
                     syncAccountToCloud();
                     renderAll();
                     showToast(`Category "${name}" removed`);
@@ -2399,10 +2570,12 @@
             const title = document.getElementById('expense-modal-title');
             const editIdEl = document.getElementById('exp-edit-id');
             const catSelect = document.getElementById('exp-category');
+            const mKey = getMonthKey(activeDate);
+            const categories = getCategoriesForMonth(mKey);
 
             if (catSelect) {
-                catSelect.innerHTML = appState.categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
-                if (appState.categories.length === 0) {
+                catSelect.innerHTML = categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+                if (categories.length === 0) {
                     catSelect.innerHTML = '<option value="Miscellaneous">Miscellaneous</option>';
                 }
             }
@@ -2429,9 +2602,28 @@
                 if (editIdEl) editIdEl.value = "";
                 document.getElementById('expense-form')?.reset();
                 if (dateInput) dateInput.value = today;
+                if (catSelect && catSelect.value) {
+                    onExpenseCategoryChange(catSelect.value);
+                }
             }
 
             document.getElementById('add-expense-modal')?.classList.remove('hidden');
+        }
+
+        /* Auto-select spending tag based on category type */
+        function onExpenseCategoryChange(catName) {
+            if (!catName) return;
+            const mKey = getMonthKey(activeDate);
+            const categories = getCategoriesForMonth(mKey);
+            const cat = categories.find(c => c.name.toLowerCase() === catName.toLowerCase());
+            let targetTag = 'Need';
+            if (cat) {
+                if (cat.type === 'saving') targetTag = 'Saving';
+                else if (cat.type === 'want') targetTag = 'Want';
+                else targetTag = 'Need';
+            }
+            const radio = document.querySelector(`input[name="exp-tag"][value="${targetTag}"]`);
+            if (radio) radio.checked = true;
         }
 
         function closeAddExpenseModal() {
@@ -2470,6 +2662,15 @@
                     payment,
                     tag
                 });
+            }
+
+            // Auto-allocate category budget if currently unassigned (allocated == 0)
+            const mKey = getMonthKey(activeDate);
+            const categories = getCategoriesForMonth(mKey);
+            const matchedCat = categories.find(c => c.name.toLowerCase() === category.toLowerCase());
+            if (matchedCat && (Number(matchedCat.allocated) === 0 || !matchedCat.allocated)) {
+                matchedCat.allocated = amount;
+                matchedCat.isAutoAllocated = true;
             }
 
             syncAccountToCloud();
@@ -3317,20 +3518,104 @@
         }
 
         function renderBudgetSection(monthlySalary, activeExpenses) {
+            const mKey = getMonthKey(activeDate);
+            const categories = getCategoriesForMonth(mKey);
+
             const needTarget = monthlySalary * 0.50;
             const wantTarget = monthlySalary * 0.30;
             const saveTarget = monthlySalary * 0.20;
 
-            const needAlloc = appState.categories.filter(c => c.type === 'need').reduce((s, c) => s + (Number(c.allocated) || 0), 0);
-            const wantAlloc = appState.categories.filter(c => c.type === 'want').reduce((s, c) => s + (Number(c.allocated) || 0), 0);
-            const saveAlloc = appState.categories.filter(c => c.type === 'saving').reduce((s, c) => s + (Number(c.allocated) || 0), 0);
+            // 1. Automatic allocation: If an expense was logged in a category with 0 allocation, auto-allocate to cover actual spending
+            let hasAutoAllocated = false;
+            categories.forEach(cat => {
+                const spentInCat = activeExpenses
+                    .filter(e => e.category && e.category.toLowerCase() === cat.name.toLowerCase())
+                    .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
 
+                if ((Number(cat.allocated) === 0 || !cat.allocated) && spentInCat > 0) {
+                    cat.allocated = spentInCat;
+                    cat.isAutoAllocated = true;
+                    hasAutoAllocated = true;
+                }
+            });
+            if (hasAutoAllocated) {
+                syncAccountToCloud();
+            }
+
+            // 2. Compute actual spending per 50/30/20 bucket
+            let needSpent = 0;
+            let wantSpent = 0;
+            let saveSpent = 0;
+
+            activeExpenses.forEach(e => {
+                const amt = Number(e.amount) || 0;
+                const cat = categories.find(c => c.name && c.name.toLowerCase() === (e.category || '').toLowerCase());
+                const type = cat ? cat.type : (e.tag === 'Saving' ? 'saving' : (e.tag === 'Need' ? 'need' : 'want'));
+                if (type === 'need') needSpent += amt;
+                else if (type === 'saving') saveSpent += amt;
+                else wantSpent += amt;
+            });
+
+            // 3. Compute allocated budget per bucket
+            const needAlloc = categories.filter(c => c.type === 'need').reduce((s, c) => s + (Number(c.allocated) || 0), 0);
+            const wantAlloc = categories.filter(c => c.type === 'want').reduce((s, c) => s + (Number(c.allocated) || 0), 0);
+            const saveAlloc = categories.filter(c => c.type === 'saving').reduce((s, c) => s + (Number(c.allocated) || 0), 0);
+
+            // 4. Update Needs Top Card
             const needEl = document.getElementById('budget-need-total');
-            if (needEl) needEl.innerText = `${formatINR(needAlloc)} / ${formatINR(needTarget)}`;
+            const needSub = document.getElementById('budget-need-sub');
+            const needBadge = document.getElementById('budget-need-badge');
+            if (needEl) {
+                needEl.innerText = `${formatINR(needSpent)} / ${formatINR(needTarget)}`;
+                needEl.className = `text-2xl font-bold mt-1 ${needSpent > needTarget ? 'text-red-500' : 'text-slate-900 dark:text-white'}`;
+            }
+            if (needSub) {
+                needSub.innerText = needSpent > needTarget 
+                    ? `⚠️ Over 50% target by ${formatINR(needSpent - needTarget)} (Allocated: ${formatINR(needAlloc)})`
+                    : `Allocated: ${formatINR(needAlloc)} • Rent, Groceries, EMIs`;
+                needSub.className = `text-xs ${needSpent > needTarget ? 'text-red-500 font-semibold' : 'text-brand-600'} mt-1 block`;
+            }
+            if (needBadge) {
+                const pct = needTarget > 0 ? Math.round((needSpent / needTarget) * 100) : 0;
+                needBadge.innerText = `${pct}%`;
+                needBadge.className = `text-[10px] font-bold px-2 py-0.5 rounded-full ${pct > 100 ? 'bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'}`;
+            }
+
+            // 5. Update Wants Top Card
             const wantEl = document.getElementById('budget-want-total');
-            if (wantEl) wantEl.innerText = `${formatINR(wantAlloc)} / ${formatINR(wantTarget)}`;
+            const wantSub = document.getElementById('budget-want-sub');
+            const wantBadge = document.getElementById('budget-want-badge');
+            if (wantEl) {
+                wantEl.innerText = `${formatINR(wantSpent)} / ${formatINR(wantTarget)}`;
+                wantEl.className = `text-2xl font-bold mt-1 ${wantSpent > wantTarget ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-white'}`;
+            }
+            if (wantSub) {
+                wantSub.innerText = wantSpent > wantTarget 
+                    ? `⚠️ Over 30% target by ${formatINR(wantSpent - wantTarget)} (Allocated: ${formatINR(wantAlloc)})`
+                    : `Allocated: ${formatINR(wantAlloc)} • Dining, Shopping, Travel`;
+                wantSub.className = `text-xs ${wantSpent > wantTarget ? 'text-amber-600 dark:text-amber-400 font-semibold' : 'text-amber-600'} mt-1 block`;
+            }
+            if (wantBadge) {
+                const pct = wantTarget > 0 ? Math.round((wantSpent / wantTarget) * 100) : 0;
+                wantBadge.innerText = `${pct}%`;
+                wantBadge.className = `text-[10px] font-bold px-2 py-0.5 rounded-full ${pct > 100 ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'}`;
+            }
+
+            // 6. Update Savings Top Card
             const saveEl = document.getElementById('budget-save-total');
-            if (saveEl) saveEl.innerText = `${formatINR(saveAlloc)} / ${formatINR(saveTarget)}`;
+            const saveSub = document.getElementById('budget-save-sub');
+            const saveBadge = document.getElementById('budget-save-badge');
+            if (saveEl) {
+                saveEl.innerText = `${formatINR(saveSpent)} / ${formatINR(saveTarget)}`;
+                saveEl.className = "text-2xl font-bold mt-1 text-slate-900 dark:text-white";
+            }
+            if (saveSub) {
+                saveSub.innerText = `Allocated: ${formatINR(saveAlloc)} • Monthly SIPs, PPF, Emergency Fund`;
+            }
+            if (saveBadge) {
+                const pct = saveTarget > 0 ? Math.round((saveSpent / saveTarget) * 100) : 0;
+                saveBadge.innerText = `${pct}%`;
+            }
 
             const totalAlloc = needAlloc + wantAlloc + saveAlloc;
             const unallocated = monthlySalary - totalAlloc;
@@ -3358,30 +3643,34 @@
             const list = document.getElementById('budget-categories-list');
             if (!list) return;
 
-            if (appState.categories.length === 0) {
+            if (categories.length === 0) {
                 list.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">No categories created yet. Click "Add Category" or "Auto-Apply 50/30/20".</p>`;
                 return;
             }
 
-            list.innerHTML = appState.categories.map((cat, idx) => {
+            list.innerHTML = categories.map((cat, idx) => {
                 const spentInCat = activeExpenses
                     .filter(e => e.category && e.category.toLowerCase() === cat.name.toLowerCase())
                     .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
 
-                const pct = cat.allocated > 0 ? Math.min(100, Math.round((spentInCat / cat.allocated) * 100)) : 0;
-                const barColor = pct > 90 ? 'bg-red-500' : pct > 70 ? 'bg-amber-500' : 'bg-brand-600';
+                const pct = cat.allocated > 0 ? Math.min(100, Math.round((spentInCat / cat.allocated) * 100)) : (spentInCat > 0 ? 100 : 0);
+                const barColor = pct >= 100 ? 'bg-red-500' : pct > 75 ? 'bg-amber-500' : 'bg-brand-600';
+                const isMonthOnly = cat.scope === 'this-month';
 
                 return `
                     <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-700/40 border border-slate-200 dark:border-slate-700 space-y-2">
                         <div class="flex items-center justify-between text-xs sm:text-sm">
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2 flex-wrap">
                                 <span class="font-bold">${cat.name}</span>
                                 <span class="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-lg ${cat.type === 'need' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' : cat.type === 'want' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'}">${cat.type}</span>
+                                ${cat.isAutoAllocated ? '<span class="text-[9px] bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded font-mono">Auto-Allocated</span>' : ''}
+                                ${isMonthOnly ? '<span class="text-[9px] bg-purple-100 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded-full font-semibold border border-purple-200 dark:border-purple-800"><i class="fa-solid fa-calendar mr-1"></i>This Month Only</span>' : ''}
                             </div>
                             <div class="flex items-center gap-2">
                                 <span class="font-bold">${formatINR(spentInCat)} <span class="text-slate-400 font-normal">/ ${formatINR(cat.allocated)}</span></span>
-                                <button onclick="openAddCategoryModal(${idx})" class="p-1 text-slate-400 hover:text-brand-600"><i class="fa-solid fa-pen text-xs"></i></button>
-                                <button onclick="deleteCategory(${idx})" class="p-1 text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                                ${isMonthOnly ? `<button onclick="carryCategoryForward(${idx})" class="p-1.5 text-slate-400 hover:text-purple-600 transition" title="Carry forward to future months"><i class="fa-solid fa-angles-right text-xs"></i></button>` : ''}
+                                <button onclick="openAddCategoryModal(${idx})" class="p-1 text-slate-400 hover:text-brand-600" title="Edit Budget"><i class="fa-solid fa-pen text-xs"></i></button>
+                                <button onclick="deleteCategory(${idx})" class="p-1 text-slate-400 hover:text-red-500" title="Delete Category"><i class="fa-solid fa-trash-can text-xs"></i></button>
                             </div>
                         </div>
                         <div class="w-full bg-slate-200 dark:bg-slate-600 h-2 rounded-full overflow-hidden">
@@ -3424,8 +3713,8 @@
                     <td class="p-4"><span class="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-700 text-xs">${e.category}</span></td>
                     <td class="p-4 text-xs text-slate-500">${e.payment || 'UPI'}</td>
                     <td class="p-4">
-                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-lg ${e.tag === 'Regret' ? 'bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400' : e.tag === 'Want' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'}">
-                            ${e.tag || 'Need'}
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-lg ${e.tag === 'Regret' ? 'bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400' : e.tag === 'Saving' ? 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300' : e.tag === 'Want' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'}">
+                            ${e.tag === 'Saving' ? '<i class="fa-solid fa-piggy-bank mr-1 text-[9px]"></i>' : ''}${e.tag || 'Need'}
                         </span>
                     </td>
                     <td class="p-4 text-right font-bold">${formatINR(e.amount)}</td>
@@ -3788,6 +4077,7 @@
             togglePasswordVisibility,
             autoSuggestUsername,
             onUsernameManualInput,
+            onExpenseCategoryChange,
             handleUniversalSignIn,
             handleUniversalRegister,
             selectQuickAccount,
@@ -3812,6 +4102,7 @@
             closeCategoryModal,
             handleCategorySubmit,
             deleteCategory,
+            carryCategoryForward,
             openAddExpenseModal,
             closeAddExpenseModal,
             handleExpenseSubmit,
