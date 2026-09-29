@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Ledger — Personal Finance & Multi-User Wealth Tracker</title>
+    <title>Ledger — Personal Finance & Multi-Device Wealth Tracker</title>
     <!-- iOS Web App & PWA Settings -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Ledger">
     <link rel="apple-touch-icon" href="https://img.icons8.com/color/180/wallet--v1.png">
+    
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -30,19 +31,28 @@
             }
         }
     </script>
+    
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- FontAwesome 6 Icons CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         input[type="range"]::-webkit-slider-thumb { cursor: pointer; }
         .ios-bottom-bar { padding-bottom: max(0.6rem, env(safe-area-inset-bottom)); }
+        @keyframes pulse-subtle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        .cloud-pulse { animation: pulse-subtle 2s infinite ease-in-out; }
     </style>
+<!-- Google Identity Services SDK -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200">
 
@@ -52,25 +62,27 @@
         <span id="toast-msg" class="text-sm font-medium">Action completed successfully</span>
     </div>
 
-    <!-- 1. UNIVERSAL CROSS-DEVICE AUTHENTICATION & ACCOUNT CREATION SCREEN -->
+    <!-- 1. UNIVERSAL CROSS-DEVICE AUTHENTICATION & LOGIN SCREEN -->
     <div id="universal-auth-modal" class="fixed inset-0 z-50 bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-3xl shadow-2xl max-w-md w-full border border-slate-200 dark:border-slate-700 max-h-[92vh] overflow-y-auto">
+        <div class="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-3xl shadow-2xl max-w-md w-full border border-slate-200 dark:border-slate-700 max-h-[94vh] overflow-y-auto">
             
-            <!-- Branding Header -->
+            <!-- Branding Header with Universal Cloud Sync Badge -->
             <div class="text-center mb-6">
-                <div class="w-14 h-14 bg-gradient-to-tr from-brand-600 to-emerald-400 text-white rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl shadow-lg">
+                <div class="w-14 h-14 bg-gradient-to-tr from-brand-600 to-emerald-400 text-white rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl shadow-lg shadow-brand-500/20">
                     <i class="fa-solid fa-shield-halved"></i>
                 </div>
                 <h2 class="text-2xl font-bold tracking-tight">Ledger Finance</h2>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Cross-device wealth tracking with custom PIN protection</p>
-                <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 rounded-full text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold mt-2.5">
-                    <i class="fa-solid fa-cloud text-[10px]"></i>
-                    <span>Cloud Synced Across All Devices</span>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Universal cross-device wealth tracker</p>
+                
+                <div class="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60 rounded-full text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold mt-2.5 shadow-sm">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 cloud-pulse"></span>
+                    <span>Universal Cloud Login Active</span>
                 </div>
+                <p class="text-[11px] text-slate-400 mt-1.5 px-4 leading-snug">Log in from any laptop, mobile phone, or tablet using your username or email and PIN.</p>
             </div>
 
             <!-- Tab Switcher (Sign In vs Create Account) -->
-            <div class="grid grid-cols-2 p-1 bg-slate-100 dark:bg-slate-700/60 rounded-2xl mb-6">
+            <div class="grid grid-cols-2 p-1 bg-slate-100 dark:bg-slate-700/60 rounded-2xl mb-5">
                 <button type="button" id="auth-tab-signin" onclick="switchAuthTab('signin')" class="py-2.5 text-xs sm:text-sm font-bold rounded-xl transition shadow-sm bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400">
                     Sign In
                 </button>
@@ -79,7 +91,7 @@
                 </button>
             </div>
 
-            <!-- TAB 1: SIGN IN FORM -->
+            <!-- TAB 1: UNIVERSAL SIGN IN FORM -->
             <div id="auth-view-signin" class="space-y-4">
                 <form onsubmit="handleUniversalSignIn(event)" class="space-y-4">
                     <div>
@@ -88,40 +100,63 @@
                             <i class="fa-solid fa-user absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
                             <input type="text" id="signin-identifier" required placeholder="e.g. rahul91 or rahul@gmail.com" class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm font-medium focus:ring-2 focus:ring-brand-500 outline-none">
                         </div>
-                        <p class="text-[10px] text-slate-400 mt-1">Use the same identifier you registered with.</p>
+                        <p class="text-[10px] text-slate-400 mt-1">Enter the same username or email you created on your laptop or other device.</p>
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Your Security PIN</label>
                         <div class="relative">
                             <i class="fa-solid fa-key absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
-                            <input type="password" inputmode="numeric" id="signin-pin" required maxlength="8" placeholder="Enter your 4-6 digit PIN" class="w-full pl-9 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm font-bold tracking-widest focus:ring-2 focus:ring-brand-500 outline-none">
+                            <input type="password" inputmode="numeric" id="signin-pin" required maxlength="8" placeholder="Enter your PIN" class="w-full pl-9 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm font-bold tracking-widest focus:ring-2 focus:ring-brand-500 outline-none">
                             <button type="button" onclick="togglePasswordVisibility('signin-pin', 'signin-pin-eye')" class="absolute right-3.5 top-3 text-slate-400 hover:text-slate-600">
                                 <i id="signin-pin-eye" class="fa-solid fa-eye text-xs"></i>
                             </button>
                         </div>
                     </div>
 
-                    <p id="signin-error" class="text-red-500 text-xs hidden text-center font-medium bg-red-50 dark:bg-red-950/30 py-2 px-3 rounded-xl border border-red-200 dark:border-red-900">
+                    <p id="signin-error" class="text-red-500 text-xs hidden text-center font-medium bg-red-50 dark:bg-red-950/30 py-2.5 px-3 rounded-xl border border-red-200 dark:border-red-900">
                         <i class="fa-solid fa-circle-exclamation mr-1"></i> <span id="signin-error-text">Account not found or incorrect PIN.</span>
                     </p>
 
                     <button type="submit" id="signin-btn" class="w-full py-3 bg-brand-600 hover:bg-brand-700 active:scale-[0.99] text-white font-semibold rounded-2xl shadow-lg transition flex items-center justify-center gap-2 text-sm">
-                        <span id="signin-btn-text">Unlock & Sync Ledger</span>
+                        <span id="signin-btn-text">Unlock & Open Ledger</span>
                         <i id="signin-spinner" class="fa-solid fa-circle-notch fa-spin hidden"></i>
                     </button>
                 </form>
+                <!-- Divider & Google Sign-In Button -->
+                <div class="relative my-4 text-center">
+                    <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-200 dark:border-slate-700"></div></div>
+                    <span class="relative px-3 bg-white dark:bg-slate-800 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Or continue with</span>
+                </div>
 
-                <!-- Saved Accounts on this Device -->
+                <div class="flex justify-center mb-2">
+                    <div id="g_id_onload"
+                         data-client_id="7005229310-nbactcdqutvd6d6nogdj2u6bsd5auao3.apps.googleusercontent.com.apps.googleusercontent.com"
+                         data-callback="handleGoogleResponse"
+                         data-auto_prompt="false">
+                    </div>
+                    <div class="g_id_signin" 
+                         data-type="standard" 
+                         data-shape="rectangular" 
+                         data-theme="outline" 
+                         data-size="large" 
+                         data-width="320">
+                    </div>
+                </div>
+
+                <!-- Saved Profiles On This Device -->
                 <div id="device-accounts-section" class="pt-3 border-t border-slate-100 dark:border-slate-700">
-                    <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2.5 text-left">Accounts on this Device</p>
+                    <div class="flex items-center justify-between mb-2">
+                        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider text-left">Accounts on this Device</p>
+                        <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold"><i class="fa-solid fa-arrows-rotate mr-1"></i>Auto-Synced</span>
+                    </div>
                     <div id="device-accounts-list" class="space-y-2">
                         <!-- Populated dynamically via JS -->
                     </div>
                 </div>
             </div>
 
-            <!-- TAB 2: CREATE ACCOUNT FORM -->
+            <!-- TAB 2: CREATE NEW CLOUD-SYNCED ACCOUNT FORM -->
             <div id="auth-view-register" class="space-y-4 hidden">
                 <form onsubmit="handleUniversalRegister(event)" class="space-y-3.5">
                     <div>
@@ -137,13 +172,13 @@
                     <div>
                         <div class="flex items-center justify-between mb-1">
                             <label class="block text-xs font-semibold text-slate-500 uppercase">Unique Username</label>
-                            <span class="text-[10px] text-brand-600 dark:text-brand-400 font-semibold">Short login handle</span>
+                            <span class="text-[10px] text-brand-600 dark:text-brand-400 font-semibold">Login handle</span>
                         </div>
                         <div class="relative">
                             <span class="absolute left-3.5 top-2.5 text-slate-400 font-bold text-xs">@</span>
                             <input type="text" id="reg-username" oninput="onUsernameManualInput()" required placeholder="e.g. rahul91" class="w-full pl-8 pr-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm font-medium focus:ring-2 focus:ring-brand-500 outline-none">
                         </div>
-                        <p class="text-[10px] text-slate-400 mt-1">Use this unique username to log in easily without typing your full email.</p>
+                        <p class="text-[10px] text-slate-400 mt-1">Use this username or your email to log in on any laptop, phone, or tablet.</p>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2.5">
@@ -198,7 +233,7 @@
                     </p>
 
                     <button type="submit" id="reg-btn" class="w-full py-3 bg-brand-600 hover:bg-brand-700 active:scale-[0.99] text-white font-semibold rounded-2xl shadow-lg transition flex items-center justify-center gap-2 text-sm mt-2">
-                        <span id="reg-btn-text">Create Account & Sync to Devices</span>
+                        <span id="reg-btn-text">Create Account & Sync to Cloud</span>
                         <i id="reg-spinner" class="fa-solid fa-circle-notch fa-spin hidden"></i>
                     </button>
                 </form>
@@ -218,7 +253,7 @@
                         </div>
                         <div>
                             <span id="mobile-user-name" class="font-bold text-sm block leading-tight">User</span>
-                            <span id="mobile-user-email" class="text-[10px] text-slate-400">Active Profile</span>
+                            <span id="mobile-user-email" class="text-[10px] text-slate-400">Cloud Synced</span>
                         </div>
                     </div>
                     <button onclick="toggleMobileDrawer(false)" class="text-slate-400 hover:text-slate-700 dark:hover:text-white p-2">
@@ -251,7 +286,7 @@
                         <i class="fa-solid fa-file-invoice-dollar w-5 text-teal-500"></i> Tax & Simulator
                     </button>
                     <button onclick="switchTab('settings'); toggleMobileDrawer(false)" class="drawer-nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/60" data-tab="settings">
-                        <i class="fa-solid fa-gear w-5 text-slate-500"></i> Settings & Backup
+                        <i class="fa-solid fa-gear w-5 text-slate-500"></i> Settings & Sync
                     </button>
                 </nav>
             </div>
@@ -281,7 +316,9 @@
                     </div>
                     <div class="overflow-hidden">
                         <h1 id="desktop-user-name" class="font-bold text-sm leading-tight truncate">User</h1>
-                        <span id="desktop-user-email" class="text-[10px] text-slate-400 truncate block">Active Profile</span>
+                        <span id="desktop-user-email" class="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono truncate block flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span> Cloud Active
+                        </span>
                     </div>
                 </div>
                 <button onclick="lockAndSwitchAccount()" class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 flex items-center justify-center text-slate-500 transition" title="Switch Account">
@@ -289,6 +326,7 @@
                 </button>
             </div>
 
+            <!-- Navigation Links -->
             <nav class="flex-1 space-y-1 overflow-y-auto hide-scrollbar">
                 <button onclick="switchTab('dashboard')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-600 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-slate-700/50" data-tab="dashboard">
                     <i class="fa-solid fa-chart-pie w-5"></i> Dashboard
@@ -315,7 +353,7 @@
                     <i class="fa-solid fa-file-invoice-dollar w-5"></i> Tax & Simulator
                 </button>
                 <button onclick="switchTab('settings')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-600 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-slate-700/50" data-tab="settings">
-                    <i class="fa-solid fa-gear w-5"></i> Settings & Backup
+                    <i class="fa-solid fa-gear w-5"></i> Settings & Sync
                 </button>
             </nav>
 
@@ -366,7 +404,13 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- Header Quick Actions and Cloud Status -->
                 <div class="flex items-center gap-2">
+                    <div class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/40 text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 cloud-pulse"></span>
+                        <span id="header-sync-status">Synced</span>
+                    </div>
                     <button onclick="lockAndSwitchAccount()" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition text-xs font-semibold" title="Switch User Profile">
                         <span id="header-user-avatar" class="w-5 h-5 rounded-lg bg-emerald-600 flex items-center justify-center text-white text-[10px] font-bold">U</span>
                         <span id="header-user-name" class="hidden sm:inline text-slate-800 dark:text-slate-200">User</span>
@@ -781,11 +825,11 @@
                 <!-- 9. SETTINGS & MULTI-USER MANAGEMENT VIEW -->
                 <div id="view-settings" class="space-y-6 tab-view hidden">
                     <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm max-w-2xl">
-                        <h3 class="font-bold text-lg mb-1">Account & Privacy Settings</h3>
-                        <p class="text-xs text-slate-500 mb-6">Manage your isolated profile, PIN, backups, and configurations.</p>
+                        <h3 class="font-bold text-lg mb-1">Account & Universal Cloud Sync</h3>
+                        <p class="text-xs text-slate-500 mb-6">Your data is synced automatically across all your devices.</p>
                         
                         <div class="space-y-4">
-                            <!-- Active Profile Switcher Card -->
+                            <!-- Active Profile Card -->
                             <div class="p-4 bg-brand-50 dark:bg-slate-700/50 rounded-2xl border border-brand-200 dark:border-slate-600 flex items-center justify-between">
                                 <div class="flex items-center gap-3">
                                     <div id="settings-avatar-badge" class="w-10 h-10 rounded-xl bg-emerald-600 text-white font-bold flex items-center justify-center">
@@ -793,12 +837,31 @@
                                     </div>
                                     <div class="overflow-hidden">
                                         <h4 id="settings-profile-name" class="font-semibold text-sm truncate">Active Account</h4>
-                                        <p id="settings-profile-email" class="text-xs text-slate-500 truncate">100% private data isolation</p>
+                                        <p id="settings-profile-email" class="text-xs text-slate-500 truncate">Synced with cloud</p>
                                     </div>
                                 </div>
                                 <button onclick="lockAndSwitchAccount()" class="px-3.5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold transition shrink-0">
                                     Switch Profile
                                 </button>
+                            </div>
+
+                            <!-- Cross-Device Cloud Status Box -->
+                            <div class="flex flex-col p-4 bg-emerald-50 dark:bg-emerald-950/20 rounded-2xl border border-emerald-200 dark:border-emerald-900/50 gap-2.5">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 cloud-pulse"></span>
+                                        <h4 class="font-semibold text-sm text-emerald-800 dark:text-emerald-300">Any-Device Access Enabled</h4>
+                                    </div>
+                                    <span class="px-2.5 py-0.5 bg-emerald-600 text-white rounded-full text-[10px] font-bold">ACTIVE</span>
+                                </div>
+                                <p class="text-xs text-emerald-700 dark:text-emerald-400">
+                                    You can open this account on any phone, laptop, or tablet. Simply navigate to this website on that device and log in with your username/email and PIN.
+                                </p>
+                                <div class="pt-1 flex items-center gap-2">
+                                    <button onclick="triggerImmediateCloudSync()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-semibold shadow-sm transition flex items-center gap-1.5">
+                                        <i class="fa-solid fa-cloud-arrow-up text-xs"></i> Sync Now to Cloud
+                                    </button>
+                                </div>
                             </div>
 
                             <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700/50 rounded-2xl">
@@ -812,7 +875,7 @@
                             <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700/50 rounded-2xl">
                                 <div>
                                     <h4 class="font-semibold text-sm">Change My PIN</h4>
-                                    <p class="text-xs text-slate-500">Update your 4-digit profile security PIN</p>
+                                    <p class="text-xs text-slate-500">Update your security PIN across all devices</p>
                                 </div>
                                 <button onclick="openChangePinModal()" class="px-4 py-2 bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 rounded-xl text-xs sm:text-sm font-semibold transition">Change PIN</button>
                             </div>
@@ -827,28 +890,8 @@
 
                             <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700/50 rounded-2xl">
                                 <div>
-                                    <h4 class="font-semibold text-sm">Download User Guide / README</h4>
-                                    <p class="text-xs text-slate-500">Full user training manual & multi-user docs</p>
-                                </div>
-                                <button onclick="downloadReadmeFile()" class="px-4 py-2 bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5">
-                                    <i class="fa-solid fa-download text-xs text-brand-600"></i> Download
-                                </button>
-                            </div>
-
-                            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-emerald-50 dark:bg-emerald-950/20 rounded-2xl border border-emerald-200 dark:border-emerald-900/50 gap-3">
-                                <div>
-                                    <h4 class="font-semibold text-sm text-emerald-800 dark:text-emerald-300">Cross-Device Cloud Sync</h4>
-                                    <p class="text-xs text-emerald-600 dark:text-emerald-400">Open this exact ledger on any other phone or laptop using your Account ID & PIN</p>
-                                </div>
-                                <span class="px-3 py-1.5 bg-emerald-600 text-white rounded-xl text-xs font-semibold whitespace-nowrap shadow-sm">
-                                    <i class="fa-solid fa-circle-check mr-1 text-[11px]"></i> Active
-                                </span>
-                            </div>
-
-                            <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700/50 rounded-2xl">
-                                <div>
                                     <h4 class="font-semibold text-sm">Export Data Backup</h4>
-                                    <p class="text-xs text-slate-500">Save your profile data as a JSON file</p>
+                                    <p class="text-xs text-slate-500">Save an offline JSON snapshot of your data</p>
                                 </div>
                                 <button onclick="exportDataJson()" class="px-4 py-2 bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 rounded-xl text-xs sm:text-sm font-semibold transition">Export JSON</button>
                             </div>
@@ -856,7 +899,7 @@
                             <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700/50 rounded-2xl">
                                 <div>
                                     <h4 class="font-semibold text-sm">Import Data Backup</h4>
-                                    <p class="text-xs text-slate-500">Restore ledger data from a JSON backup file</p>
+                                    <p class="text-xs text-slate-500">Restore ledger data from a JSON file</p>
                                 </div>
                                 <input type="file" id="import-file-input" onchange="importDataJson(event)" class="hidden">
                                 <button onclick="document.getElementById('import-file-input').click()" class="px-4 py-2 bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 rounded-xl text-xs sm:text-sm font-semibold transition">Import JSON</button>
@@ -1012,6 +1055,36 @@
         </div>
     </div>
 
+    <!-- Add / Edit Category Modal -->
+    <div id="category-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-700">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="category-modal-title" class="font-bold text-lg">Add Budget Category</h3>
+                <button onclick="closeCategoryModal()" class="text-slate-400 hover:text-slate-600 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="category-form" onsubmit="handleCategorySubmit(event)" class="space-y-4">
+                <input type="hidden" id="cat-edit-idx" value="">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Category Name</label>
+                    <input type="text" id="cat-name" required placeholder="e.g. Groceries, Travel, Healthcare" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Monthly Budget Allocation (₹)</label>
+                    <input type="number" inputmode="numeric" id="cat-allocation" required placeholder="e.g. 5000" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Category Type</label>
+                    <select id="cat-type" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none">
+                        <option value="need">Need (50% target - essentials, bills, EMIs)</option>
+                        <option value="want">Want (30% target - dining, leisure, hobbies)</option>
+                        <option value="saving">Saving (20% target - SIP, investments, PF)</option>
+                    </select>
+                </div>
+                <button type="submit" id="cat-submit-btn" class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-2xl shadow-lg transition">Save Category</button>
+            </form>
+        </div>
+    </div>
+
     <!-- Add / Edit Debt & EMI Modal -->
     <div id="debt-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center hidden p-4">
         <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-700 max-h-[90vh] overflow-y-auto">
@@ -1047,36 +1120,6 @@
                     </div>
                 </div>
                 <button type="submit" id="debt-submit-btn" class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-2xl shadow-lg transition">Save Loan / EMI</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Add / Edit Category Modal -->
-    <div id="category-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center hidden p-4">
-        <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-700">
-            <div class="flex justify-between items-center mb-4">
-                <h3 id="category-modal-title" class="font-bold text-lg">Add Budget Category</h3>
-                <button onclick="closeCategoryModal()" class="text-slate-400 hover:text-slate-600 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <form id="category-form" onsubmit="handleCategorySubmit(event)" class="space-y-4">
-                <input type="hidden" id="cat-edit-idx" value="">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Category Name</label>
-                    <input type="text" id="cat-name" required placeholder="e.g. Groceries, Travel, Healthcare" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Monthly Budget Allocation (₹)</label>
-                    <input type="number" inputmode="numeric" id="cat-allocation" required placeholder="e.g. 5000" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Category Type</label>
-                    <select id="cat-type" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm outline-none">
-                        <option value="need">Need (50% target - essentials, bills, EMIs)</option>
-                        <option value="want">Want (30% target - dining, leisure, hobbies)</option>
-                        <option value="saving">Saving (20% target - SIP, investments, PF)</option>
-                    </select>
-                </div>
-                <button type="submit" id="cat-submit-btn" class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-2xl shadow-lg transition">Save Category</button>
             </form>
         </div>
     </div>
@@ -1161,44 +1204,32 @@
             </div>
             <form onsubmit="handleChangePinSubmit(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">New 4-Digit Security PIN</label>
-                    <input type="password" inputmode="numeric" maxlength="4" id="new-pin-input" required placeholder="e.g. 5678" class="w-full px-4 py-2.5 text-center text-xl tracking-widest rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 font-bold focus:ring-2 focus:ring-brand-500 outline-none">
+                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">New Security PIN (4-8 digits)</label>
+                    <input type="password" inputmode="numeric" maxlength="8" id="new-pin-input" required placeholder="e.g. 5678" class="w-full px-4 py-2.5 text-center text-xl tracking-widest rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 font-bold focus:ring-2 focus:ring-brand-500 outline-none">
                 </div>
-                <button type="submit" class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-2xl shadow-lg transition">Update PIN</button>
+                <button type="submit" class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-2xl shadow-lg transition">Update & Sync PIN</button>
             </form>
         </div>
     </div>
 
-    <!-- Configure Google Client ID Modal -->
-    <div id="google-client-id-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center hidden p-4">
-        <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-700">
-            <div class="flex justify-between items-center mb-3">
-                <h3 class="font-bold text-lg">Configure Google Client ID</h3>
-                <button onclick="closeGoogleClientIdModal()" class="text-slate-400 hover:text-slate-600 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-sm w-full p-6 border border-slate-200 dark:border-slate-700 space-y-4">
+            <h3 id="confirm-modal-title" class="font-bold text-lg text-slate-900 dark:text-white">Confirm Action</h3>
+            <p id="confirm-modal-msg" class="text-xs text-slate-500 dark:text-slate-400">Are you sure you want to proceed?</p>
+            <div class="flex gap-2.5 pt-2">
+                <button type="button" onclick="closeConfirmModal()" class="w-1/2 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-700 transition">Cancel</button>
+                <button type="button" onclick="handleConfirmAccept()" class="w-1/2 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold shadow transition">Confirm</button>
             </div>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
-                Optional: Paste your Google Cloud OAuth 2.0 Web Client ID to enable native Google One-Tap authentication on your custom domain.
-            </p>
-            <form onsubmit="handleGoogleClientIdSubmit(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Client ID</label>
-                    <input type="text" id="google-client-id-input" placeholder="e.g. 12345678-abc.apps.googleusercontent.com" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs focus:ring-2 focus:ring-brand-500 outline-none">
-                </div>
-                <div class="flex gap-2">
-                    <button type="button" onclick="clearGoogleClientId()" class="w-1/2 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-semibold transition">Clear</button>
-                    <button type="submit" class="w-1/2 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold shadow transition">Save Client ID</button>
-                </div>
-            </form>
         </div>
     </div>
 
-    <!-- Application JavaScript Engine (Cloud-Synced & Module-Protected) -->
+    <!-- Application JavaScript Engine (Universal Cross-Device Cloud-Sync) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, deleteDoc, onSnapshot, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        /* Format number according to Indian Currency standard (Lakh/Crore) */
         function formatINR(amount) {
             let num = Number(amount);
             if (isNaN(num) || num === 0) return '₹0';
@@ -1213,7 +1244,6 @@
             return (isNeg ? '-₹' : '₹') + res;
         }
 
-        /* Color classes dictionary for avatars */
         const colorClassMap = {
             emerald: 'bg-emerald-600',
             blue: 'bg-blue-600',
@@ -1222,7 +1252,6 @@
             amber: 'bg-amber-600'
         };
 
-        /* Default user data schema */
         const defaultUserData = {
             salary: 0,
             monthlySalaries: {},
@@ -1244,28 +1273,58 @@
             debts: []
         };
 
-        /* Application Environment & Cloud Globals */
+        /* Environment & Universal Cloud Storage Globals */
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'ledger-universal-app';
         let db = null;
         let auth = null;
         let authUser = null;
         let unsubscribeActiveAccount = null;
 
-        /* In-Memory Active State */
+        // Universal Zero-Setup Cloud Store URL (accessible by phone, tablet, and laptop)
+        const CLOUD_SYNC_ENDPOINT = "https://mantledb.sh/v2/ledger-finance-global-sync/accounts";
+        const CLOUD_DIRECTORY_ENDPOINT = "https://mantledb.sh/v2/ledger-finance-global-sync/directory";
+
+        /* Active Runtime State */
         let activeAccountId = null;
         let activeAccountProfile = null;
         let appState = JSON.parse(JSON.stringify(defaultUserData));
         let activeDate = new Date();
         let confirmCallback = null;
-        let deviceKnownAccounts = [];
         let isUsernameCustom = false;
+        let isSyncingToCloud = false;
 
-        /* Chart.js instances */
         let incomeExpenseChartInstance = null;
         let categoryPieChartInstance = null;
         let netWorthChartInstance = null;
 
-        /* Toast notification */
+        const STORAGE_KEY_ACCOUNTS = 'ledger_accounts';
+        const STORAGE_KEY_ACTIVE_USER = 'ledger_active_user';
+
+        function getStoredAccounts() {
+            try {
+                let accounts = {};
+                const raw = localStorage.getItem(STORAGE_KEY_ACCOUNTS);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+                        accounts = parsed;
+                    }
+                }
+                return accounts;
+            } catch (err) {
+                console.warn("Failed to parse stored accounts:", err);
+                return {};
+            }
+        }
+
+        function saveStoredAccounts(accounts) {
+            try {
+                localStorage.setItem(STORAGE_KEY_ACCOUNTS, JSON.stringify(accounts));
+            } catch (err) {
+                console.error("Failed to write accounts to localStorage:", err);
+            }
+        }
+
         function showToast(msg, icon = 'fa-circle-check') {
             const toast = document.getElementById('toast');
             const toastMsg = document.getElementById('toast-msg');
@@ -1279,7 +1338,6 @@
             }, 3000);
         }
 
-        /* Generic Confirmation Modal */
         function showConfirmModal(title, msg, onConfirm) {
             const modal = document.getElementById('confirm-modal');
             const titleEl = document.getElementById('confirm-modal-title');
@@ -1303,41 +1361,11 @@
             closeConfirmModal();
         }
 
-        /* Normalize and encode safe Firestore document key from user identifier */
         function normalizeAccountId(identifier) {
             if (!identifier) return '';
             return identifier.trim().toLowerCase().replace(/[\s\/\\#\?\$\.\[\]@]/g, '_');
         }
 
-        function onUsernameManualInput() {
-            isUsernameCustom = true;
-        }
-
-        function autoSuggestUsername() {
-            if (isUsernameCustom) return;
-            const name = document.getElementById('reg-name')?.value.trim() || '';
-            const email = document.getElementById('reg-email')?.value.trim() || '';
-            const uInput = document.getElementById('reg-username');
-            if (!uInput) return;
-
-            if (email && email.includes('@')) {
-                const prefix = email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '');
-                if (prefix) {
-                    uInput.value = prefix;
-                    return;
-                }
-            }
-            if (name) {
-                const clean = name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
-                if (clean) {
-                    uInput.value = clean;
-                }
-            }
-        }
-
-        /* ----------------------------------------------------
-           CLOUD SYNCHRONIZATION ENGINE (RULE 1, 2, 3 COMPLIANT)
-           ---------------------------------------------------- */
         async function initCloudEngine() {
             if (typeof __firebase_config !== 'undefined') {
                 try {
@@ -1353,274 +1381,280 @@
                     }
                     authUser = auth.currentUser;
                 } catch (e) {
-                    console.warn("Cloud connection initialized in offline mode:", e);
+                    console.warn("Cloud Firestore initialization fallback:", e);
                 }
             }
-            await loadKnownAccounts();
         }
 
-        /* Fetch all accounts from public collection in JS memory without compound queries */
-        async function loadKnownAccounts() {
-            deviceKnownAccounts = [];
+        async function syncAccountToCloud() {
+            if (!activeAccountId || !activeAccountProfile || isSyncingToCloud) return;
+            isSyncingToCloud = true;
+            updateSyncStatusUI("Syncing...");
+
+            const docId = normalizeAccountId(activeAccountProfile?.username || activeAccountId);
+            const userHandle = (activeAccountProfile.username || activeAccountId).toLowerCase();
+            const userEmail = (activeAccountProfile.email || '').toLowerCase().trim();
+
+            const payload = {
+                identifier: userHandle,
+                username: userHandle,
+                email: userEmail,
+                name: activeAccountProfile.name || userHandle,
+                pin: String(activeAccountProfile.pin || '').trim(),
+                color: activeAccountProfile.color || 'emerald',
+                salary: appState.salary || 0,
+                monthlySalaries: appState.monthlySalaries || {},
+                categories: appState.categories || defaultUserData.categories,
+                expenses: appState.expenses || [],
+                recurringBills: appState.recurringBills || [],
+                holdings: appState.holdings || [],
+                goals: appState.goals || [],
+                debts: appState.debts || [],
+                darkMode: !!appState.darkMode,
+                updatedAt: new Date().toISOString()
+            };
+
+            // 1. Save to device local cache
+            const accounts = getStoredAccounts();
+            accounts[userHandle] = payload;
+            saveStoredAccounts(accounts);
+            localStorage.setItem(STORAGE_KEY_ACTIVE_USER, userHandle);
+
+            // 2. Sync to Cloud Firestore if available
             if (db && authUser) {
                 try {
-                    const accountsCol = collection(db, 'artifacts', appId, 'public', 'data', 'accounts');
-                    const snapshot = await getDocs(accountsCol);
-                    snapshot.forEach(docSnap => {
-                        const data = docSnap.data();
-                        if (data && (data.identifier || data.username)) {
-                            deviceKnownAccounts.push({
-                                docId: docSnap.id,
-                                identifier: data.username || data.identifier,
-                                username: data.username || data.identifier,
-                                email: data.email || '',
-                                name: data.name || data.username || data.identifier,
-                                color: data.color || 'emerald'
-                            });
-                        }
-                    });
+                    const accountDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'accounts', docId);
+                    await setDoc(accountDocRef, payload, { merge: true });
                 } catch (err) {
-                    console.warn("Error fetching accounts:", err);
+                    console.warn("Firestore cloud sync error:", err);
                 }
             }
-            renderDeviceAccountsList();
-        }
 
-        function renderDeviceAccountsList() {
-            const container = document.getElementById('device-accounts-list');
-            if (!container) return;
-
-            if (deviceKnownAccounts.length === 0) {
-                container.innerHTML = `
-                    <div class="p-3 bg-slate-50 dark:bg-slate-700/40 rounded-xl text-center text-xs text-slate-400">
-                        No saved profiles on this browser yet. Sign in or create an account above!
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = deviceKnownAccounts.map(acc => {
-                const colorCls = colorClassMap[acc.color] || 'bg-emerald-600';
-                const initial = (acc.name || 'U').charAt(0).toUpperCase();
-                const displayHandle = acc.username ? `@${acc.username}` : acc.identifier;
-                return `
-                    <div onclick="selectQuickAccount('${acc.username || acc.identifier}')" class="p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-700/40 hover:bg-brand-50 dark:hover:bg-slate-700/70 border border-slate-200 dark:border-slate-600 flex items-center justify-between cursor-pointer transition">
-                        <div class="flex items-center gap-2.5">
-                            <div class="w-8 h-8 rounded-xl ${colorCls} text-white font-bold flex items-center justify-center text-xs shadow-sm">
-                                ${initial}
-                            </div>
-                            <div class="text-left">
-                                <h4 class="text-xs font-bold text-slate-900 dark:text-white leading-tight">${acc.name}</h4>
-                                <p class="text-[10px] text-brand-600 dark:text-brand-400 font-mono font-semibold">${displayHandle}</p>
-                            </div>
-                        </div>
-                        <i class="fa-solid fa-arrow-right text-xs text-slate-400 pr-1"></i>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function selectQuickAccount(identifier) {
-            const idInput = document.getElementById('signin-identifier');
-            const pinInput = document.getElementById('signin-pin');
-            if (idInput) idInput.value = identifier;
-            if (pinInput) {
-                pinInput.value = '';
-                pinInput.focus();
-            }
-            switchAuthTab('signin');
-        }
-
-        /* Save active state to Firestore */
-        async function syncAccountToCloud() {
-            if (!activeAccountId || !db || !authUser) return;
-            const docId = normalizeAccountId(activeAccountProfile?.username || activeAccountId);
+            // 3. Sync to Universal Cross-Device Cloud Store (works across laptops, phones, tablets)
             try {
-                const accountDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'accounts', docId);
-                const payload = {
-                    identifier: activeAccountId,
-                    username: activeAccountProfile?.username || activeAccountId,
-                    email: activeAccountProfile?.email || '',
-                    name: activeAccountProfile?.name || activeAccountId,
-                    pin: activeAccountProfile?.pin || '',
-                    color: activeAccountProfile?.color || 'emerald',
-                    salary: appState.salary || 0,
-                    monthlySalaries: appState.monthlySalaries || {},
-                    categories: appState.categories || [],
-                    expenses: appState.expenses || [],
-                    recurringBills: appState.recurringBills || [],
-                    holdings: appState.holdings || [],
-                    goals: appState.goals || [],
-                    debts: appState.debts || [],
-                    darkMode: !!appState.darkMode,
-                    updatedAt: new Date().toISOString()
-                };
-                await setDoc(accountDocRef, payload, { merge: true });
+                // Post account document
+                await fetch(`${CLOUD_SYNC_ENDPOINT}/${docId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                // Link username handle in cloud directory
+                await fetch(`${CLOUD_DIRECTORY_ENDPOINT}/${docId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ docId: docId, username: userHandle, email: userEmail })
+                });
+
+                // Link email handle in cloud directory if provided
+                if (userEmail) {
+                    const emailDocKey = normalizeAccountId(userEmail);
+                    await fetch(`${CLOUD_DIRECTORY_ENDPOINT}/${emailDocKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ docId: docId, username: userHandle, email: userEmail })
+                    });
+                }
             } catch (err) {
-                console.error("Cloud sync save error:", err);
+                console.warn("Universal cloud store sync error:", err);
             }
+
+            updateSyncStatusUI("Synced");
+            isSyncingToCloud = false;
         }
 
-        /* Listen to real-time changes made from other devices */
-        function startRealtimeAccountListener(docId) {
-            if (unsubscribeActiveAccount) {
-                unsubscribeActiveAccount();
-            }
-            if (!db || !authUser) return;
+        function updateSyncStatusUI(statusText) {
+            const headerSync = document.getElementById('header-sync-status');
+            if (headerSync) headerSync.innerText = statusText;
+        }
 
-            const accountDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'accounts', docId);
-            unsubscribeActiveAccount = onSnapshot(accountDocRef, (snap) => {
-                if (snap.exists()) {
-                    const data = snap.data();
-                    // Merge remote updates into current state
-                    appState.salary = data.salary !== undefined ? data.salary : appState.salary;
-                    appState.monthlySalaries = data.monthlySalaries || appState.monthlySalaries;
-                    appState.categories = data.categories || appState.categories;
-                    appState.expenses = data.expenses || appState.expenses;
-                    appState.recurringBills = data.recurringBills || appState.recurringBills;
-                    appState.holdings = data.holdings || appState.holdings;
-                    appState.goals = data.goals || appState.goals;
-                    appState.debts = data.debts || appState.debts;
-                    renderAll();
-                }
-            }, (error) => {
-                console.warn("Snapshot subscription error:", error);
+        function triggerImmediateCloudSync() {
+            syncAccountToCloud().then(() => {
+                showToast("Account synced to Cloud for all devices!");
             });
         }
 
-        /* ----------------------------------------------------
-           AUTHENTICATION TABS & WORKFLOW
-           ---------------------------------------------------- */
-        function switchAuthTab(tab) {
-            const btnSignin = document.getElementById('auth-tab-signin');
-            const btnRegister = document.getElementById('auth-tab-register');
-            const viewSignin = document.getElementById('auth-view-signin');
-            const viewRegister = document.getElementById('auth-view-register');
-            const signinErr = document.getElementById('signin-error');
-            const regErr = document.getElementById('reg-error');
+        async function fetchAccountFromCloud(searchKey) {
+            const cleanKey = searchKey.toLowerCase().replace(/^@/, '').trim();
+            const docId = normalizeAccountId(cleanKey);
 
-            if (signinErr) signinErr.classList.add('hidden');
-            if (regErr) regErr.classList.add('hidden');
-
-            if (tab === 'signin') {
-                btnSignin.className = "py-2.5 text-xs sm:text-sm font-bold rounded-xl transition shadow-sm bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400";
-                btnRegister.className = "py-2.5 text-xs sm:text-sm font-bold rounded-xl transition text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white";
-                viewSignin.classList.remove('hidden');
-                viewRegister.classList.add('hidden');
-            } else {
-                btnRegister.className = "py-2.5 text-xs sm:text-sm font-bold rounded-xl transition shadow-sm bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400";
-                btnSignin.className = "py-2.5 text-xs sm:text-sm font-bold rounded-xl transition text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white";
-                viewRegister.classList.remove('hidden');
-                viewSignin.classList.add('hidden');
+            // 1. Check local storage accounts on this device first
+            const stored = getStoredAccounts();
+            for (const [key, acc] of Object.entries(stored)) {
+                if (
+                    acc.username?.toLowerCase() === cleanKey ||
+                    acc.email?.toLowerCase() === cleanKey ||
+                    acc.identifier?.toLowerCase() === cleanKey
+                ) {
+                    return acc;
+                }
             }
+
+            // 2. Check Cloud Firestore if initialized
+            if (db && authUser) {
+                try {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'accounts', docId);
+                    const snap = await getDoc(docRef);
+                    if (snap.exists()) {
+                        return snap.data();
+                    }
+
+                    // Memory scan for email match
+                    const accountsCol = collection(db, 'artifacts', appId, 'public', 'data', 'accounts');
+                    const allSnaps = await getDocs(accountsCol);
+                    for (const s of allSnaps.docs) {
+                        const d = s.data();
+                        if (d && ((d.username || '').toLowerCase() === cleanKey || (d.email || '').toLowerCase() === cleanKey)) {
+                            return d;
+                        }
+                    }
+                } catch (e) {
+                    console.warn("Firestore cloud query error:", e);
+                }
+            }
+
+            // 3. Check Universal Cross-Device Cloud Store
+            try {
+                // Try direct docId fetch
+                const res = await fetch(`${CLOUD_SYNC_ENDPOINT}/${docId}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && (data.username || data.identifier)) {
+                        return data;
+                    }
+                }
+
+                // Try directory lookup (especially for email or alias search)
+                const dirRes = await fetch(`${CLOUD_DIRECTORY_ENDPOINT}/${docId}`);
+                if (dirRes.ok) {
+                    const dirData = await dirRes.json();
+                    if (dirData && dirData.docId) {
+                        const actualRes = await fetch(`${CLOUD_SYNC_ENDPOINT}/${dirData.docId}`);
+                        if (actualRes.ok) {
+                            return await actualRes.json();
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn("Universal cloud store lookup error:", err);
+            }
+
+            return null;
+        }
+/* Decode Google JWT credential token */
+        function parseJwt(token) {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            return JSON.parse(decodeURIComponent(escape(window.atob(base64))));
         }
 
-        function togglePasswordVisibility(inputId, eyeId) {
-            const input = document.getElementById(inputId);
-            const eye = document.getElementById(eyeId);
-            if (!input || !eye) return;
-            if (input.type === 'password') {
-                input.type = 'text';
-                eye.className = 'fa-solid fa-eye-slash text-xs text-brand-600';
-            } else {
-                input.type = 'password';
-                eye.className = 'fa-solid fa-eye text-xs text-slate-400';
+        /* Handle login after user approves Google popup */
+        async function handleGoogleResponse(response) {
+            try {
+                const user = parseJwt(response.credential);
+                const username = user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '');
+                const docId = normalizeAccountId(username);
+
+                let accountData = await fetchAccountFromCloud(username);
+
+                activeAccountId = username;
+                activeAccountProfile = {
+                    name: user.name || username,
+                    username: username,
+                    email: user.email,
+                    identifier: username,
+                    pin: accountData?.pin || '',
+                    color: accountData?.color || 'emerald'
+                };
+
+                if (accountData) {
+                    appState = Object.assign({}, JSON.parse(JSON.stringify(defaultUserData)), accountData);
+                } else {
+                    appState = JSON.parse(JSON.stringify(defaultUserData));
+                    appState.salary = 0;
+                    await syncAccountToCloud();
+                }
+
+                const stored = getStoredAccounts();
+                stored[activeAccountId] = {
+                    ...appState,
+                    ...activeAccountProfile
+                };
+                saveStoredAccounts(stored);
+                localStorage.setItem(STORAGE_KEY_ACTIVE_USER, activeAccountId);
+
+                completeLogin(docId);
+                showToast(`Signed in with Google as ${user.name}!`);
+            } catch (err) {
+                console.error("Google Sign-In Error:", err);
+                showToast("Google sign-in failed. Please try again.", "fa-circle-exclamation");
             }
         }
-
-        /* Sign In with Username or Email and Custom PIN */
         async function handleUniversalSignIn(event) {
             event.preventDefault();
-            const identifier = document.getElementById('signin-identifier')?.value.trim();
-            const enteredPin = document.getElementById('signin-pin')?.value.trim();
+            const identifierInput = document.getElementById('signin-identifier');
+            const pinInput = document.getElementById('signin-pin');
             const errEl = document.getElementById('signin-error');
             const errText = document.getElementById('signin-error-text');
             const btnText = document.getElementById('signin-btn-text');
             const spinner = document.getElementById('signin-spinner');
 
+            const identifier = identifierInput?.value.trim();
+            const enteredPin = pinInput?.value.trim();
+
             if (!identifier || !enteredPin) return;
 
-            btnText.classList.add('hidden');
-            spinner.classList.remove('hidden');
-            errEl.classList.add('hidden');
-
-            const searchKey = identifier.toLowerCase().replace(/^@/, '');
-            const docId = normalizeAccountId(searchKey);
+            btnText?.classList.add('hidden');
+            spinner?.classList.remove('hidden');
+            errEl?.classList.add('hidden');
 
             try {
-                let accountData = null;
-                let resolvedDocId = docId;
+                const accountData = await fetchAccountFromCloud(identifier);
 
-                if (db && authUser) {
-                    // 1. Direct document check
-                    const accountDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'accounts', docId);
-                    const snap = await getDoc(accountDocRef);
-                    if (snap.exists()) {
-                        accountData = snap.data();
-                    } else {
-                        // 2. Scan accounts in memory by username or email
-                        const accountsCol = collection(db, 'artifacts', appId, 'public', 'data', 'accounts');
-                        const allSnaps = await getDocs(accountsCol);
-                        allSnaps.forEach(s => {
-                            const d = s.data();
-                            if (d) {
-                                const u = (d.username || '').toLowerCase();
-                                const e = (d.email || '').toLowerCase();
-                                const id = (d.identifier || '').toLowerCase();
-                                if (u === searchKey || e === searchKey || id === searchKey) {
-                                    accountData = d;
-                                    resolvedDocId = s.id;
-                                }
-                            }
-                        });
-                    }
-                }
-
-                // If account exists in cloud
-                if (accountData) {
-                    if (accountData.pin === enteredPin) {
-                        activeAccountId = accountData.username || accountData.identifier || searchKey;
-                        activeAccountProfile = {
-                            name: accountData.name || activeAccountId,
-                            username: accountData.username || activeAccountId,
-                            email: accountData.email || '',
-                            pin: accountData.pin,
-                            color: accountData.color || 'emerald',
-                            identifier: activeAccountId
-                        };
-                        appState = Object.assign({}, JSON.parse(JSON.stringify(defaultUserData)), {
-                            salary: accountData.salary || 0,
-                            monthlySalaries: accountData.monthlySalaries || {},
-                            categories: accountData.categories || defaultUserData.categories,
-                            expenses: accountData.expenses || [],
-                            recurringBills: accountData.recurringBills || [],
-                            holdings: accountData.holdings || [],
-                            goals: accountData.goals || [],
-                            debts: accountData.debts || [],
-                            darkMode: !!accountData.darkMode
-                        });
-
-                        completeLogin(resolvedDocId);
-                        showToast(`Welcome back, ${activeAccountProfile.name}!`);
-                    } else {
-                        errText.innerText = "Incorrect PIN for this account. Please try again.";
-                        errEl.classList.remove('hidden');
-                    }
-                } else {
-                    errText.innerText = `Account "${identifier}" was not found. Please click "Create Account" above.`;
+                if (!accountData) {
+                    errText.innerText = `No account found for "${identifier}". Please check your username/email or click "Create Account".`;
                     errEl.classList.remove('hidden');
+                    return;
                 }
+
+                // Verify PIN
+                if (String(accountData.pin).trim() !== String(enteredPin).trim()) {
+                    errText.innerText = "Incorrect PIN for this account. Please try again.";
+                    errEl.classList.remove('hidden');
+                    return;
+                }
+
+                // Successfully authenticated across devices
+                activeAccountId = (accountData.username || accountData.identifier).toLowerCase();
+                activeAccountProfile = {
+                    name: accountData.name || activeAccountId,
+                    username: activeAccountId,
+                    email: accountData.email || '',
+                    pin: String(accountData.pin).trim(),
+                    color: accountData.color || 'emerald',
+                    identifier: activeAccountId
+                };
+
+                appState = Object.assign({}, JSON.parse(JSON.stringify(defaultUserData)), accountData);
+
+                // Cache in device storage for instant offline access
+                const stored = getStoredAccounts();
+                stored[activeAccountId] = accountData;
+                saveStoredAccounts(stored);
+                localStorage.setItem(STORAGE_KEY_ACTIVE_USER, activeAccountId);
+
+                completeLogin(normalizeAccountId(activeAccountId));
+                showToast(`Welcome back, ${activeAccountProfile.name}!`);
             } catch (err) {
                 console.error("Sign in error:", err);
-                errText.innerText = "Connection error. Please try again.";
+                errText.innerText = "Connection error. Please check your network and try again.";
                 errEl.classList.remove('hidden');
             } finally {
-                btnText.classList.remove('hidden');
-                spinner.classList.add('hidden');
+                btnText?.classList.remove('hidden');
+                spinner?.classList.add('hidden');
             }
         }
 
-        /* Register New Account with Unique Username, Email and Custom PIN */
         async function handleUniversalRegister(event) {
             event.preventDefault();
             const name = document.getElementById('reg-name')?.value.trim();
@@ -1659,47 +1693,34 @@
             spinner.classList.remove('hidden');
             errEl.classList.add('hidden');
 
-            const docId = normalizeAccountId(username);
-
             try {
-                if (db && authUser) {
-                    // Check if username or email already registered
-                    const accountsCol = collection(db, 'artifacts', appId, 'public', 'data', 'accounts');
-                    const allSnaps = await getDocs(accountsCol);
-                    let conflict = false;
-                    allSnaps.forEach(s => {
-                        const d = s.data();
-                        if (d) {
-                            if ((d.username || '').toLowerCase() === username || s.id === docId) {
-                                errText.innerText = `Username "@${username}" is already taken. Please choose another username.`;
-                                conflict = true;
-                            } else if (email && (d.email || '').toLowerCase() === email) {
-                                errText.innerText = `An account with email "${email}" already exists. Please sign in instead.`;
-                                conflict = true;
-                            }
-                        }
-                    });
-
-                    if (conflict) {
-                        errEl.classList.remove('hidden');
-                        btnText.classList.remove('hidden');
-                        spinner.classList.add('hidden');
-                        return;
-                    }
+                // Check if username already exists in cloud
+                const existing = await fetchAccountFromCloud(username);
+                if (existing) {
+                    errText.innerText = `Username "@${username}" is already taken. Please choose another username.`;
+                    errEl.classList.remove('hidden');
+                    return;
                 }
 
-                // Initialize new state (Salary defaults to 0, configured inside app)
+                // Check email conflict
+                const existingEmail = await fetchAccountFromCloud(email);
+                if (existingEmail) {
+                    errText.innerText = `An account with "${email}" already exists. Please switch to Sign In.`;
+                    errEl.classList.remove('hidden');
+                    return;
+                }
+
+                // Set active user state
                 activeAccountId = username;
                 activeAccountProfile = { name, username, email, identifier: username, pin, color };
                 appState = JSON.parse(JSON.stringify(defaultUserData));
                 appState.salary = 0;
 
-                // Sync immediately to Firestore cloud collection
+                // Propagate to cloud and local storage
                 await syncAccountToCloud();
-                await loadKnownAccounts();
 
-                completeLogin(docId);
-                showToast(`Account created! Your login username is @${username}`);
+                completeLogin(normalizeAccountId(username));
+                showToast(`Account created! Log in with @${username} on any device.`);
             } catch (err) {
                 console.error("Registration error:", err);
                 errText.innerText = "Failed to create account. Please retry.";
@@ -1730,7 +1751,7 @@
                 }
             });
 
-            const userHandle = activeAccountProfile.username ? `@${activeAccountProfile.username}` : activeAccountProfile.identifier;
+            const userHandle = `@${activeAccountProfile.username || activeAccountProfile.identifier}`;
 
             const desktopName = document.getElementById('desktop-user-name');
             if (desktopName) desktopName.innerText = activeAccountProfile.name;
@@ -1739,16 +1760,209 @@
             const headerName = document.getElementById('header-user-name');
             if (headerName) headerName.innerText = activeAccountProfile.name;
             const desktopEmail = document.getElementById('desktop-user-email');
-            if (desktopEmail) desktopEmail.innerText = userHandle;
+            if (desktopEmail) desktopEmail.innerText = `${userHandle} • Synced`;
             const mobileEmail = document.getElementById('mobile-user-email');
-            if (mobileEmail) mobileEmail.innerText = userHandle;
+            if (mobileEmail) mobileEmail.innerText = `${userHandle} • Synced`;
             const settingsName = document.getElementById('settings-profile-name');
-            if (settingsName) settingsName.innerText = `${activeAccountProfile.name}'s Profile`;
+            if (settingsName) settingsName.innerText = `${activeAccountProfile.name}`;
             const settingsEmail = document.getElementById('settings-profile-email');
-            if (settingsEmail) settingsEmail.innerText = `Username: ${userHandle} (${activeAccountProfile.email || 'Cloud Synced'})`;
+            if (settingsEmail) settingsEmail.innerText = `Login: ${userHandle} / ${activeAccountProfile.email || 'Email'}`;
 
             renderAll();
-            startRealtimeAccountListener(docId);
+            startCloudSyncListener(docId);
+        }
+
+        function startCloudSyncListener(docId) {
+            if (unsubscribeActiveAccount) {
+                unsubscribeActiveAccount();
+                unsubscribeActiveAccount = null;
+            }
+
+            // 1. Firebase snapshot listener
+            if (db && authUser) {
+                const accountDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'accounts', docId);
+                unsubscribeActiveAccount = onSnapshot(accountDocRef, (snap) => {
+                    if (snap.exists()) {
+                        const data = snap.data();
+                        if (data.updatedAt && data.updatedAt !== appState.updatedAt) {
+                            mergeRemoteData(data);
+                        }
+                    }
+                }, (error) => {
+                    console.warn("Snapshot subscription error:", error);
+                });
+            }
+
+            // 2. Periodic cloud poller for updates made on other devices (e.g. phone <-> laptop)
+            setInterval(async () => {
+                if (!activeAccountId || isSyncingToCloud) return;
+                try {
+                    const res = await fetch(`${CLOUD_SYNC_ENDPOINT}/${docId}`);
+                    if (res.ok) {
+                        const cloudData = await res.json();
+                        if (cloudData && cloudData.updatedAt && cloudData.updatedAt > (appState.updatedAt || '')) {
+                            mergeRemoteData(cloudData);
+                        }
+                    }
+                } catch (e) {}
+            }, 12000);
+        }
+
+        function mergeRemoteData(data) {
+            appState.salary = data.salary !== undefined ? data.salary : appState.salary;
+            appState.monthlySalaries = data.monthlySalaries || appState.monthlySalaries;
+            appState.categories = data.categories || appState.categories;
+            appState.expenses = data.expenses || appState.expenses;
+            appState.recurringBills = data.recurringBills || appState.recurringBills;
+            appState.holdings = data.holdings || appState.holdings;
+            appState.goals = data.goals || appState.goals;
+            appState.debts = data.debts || appState.debts;
+            appState.updatedAt = data.updatedAt;
+
+            const accounts = getStoredAccounts();
+            accounts[activeAccountId] = data;
+            saveStoredAccounts(accounts);
+            renderAll();
+            showToast("Updated with latest changes from your other device!", "fa-arrows-rotate");
+        }
+
+        function renderDeviceAccountsList() {
+            const container = document.getElementById('device-accounts-list');
+            if (!container) return;
+
+            const stored = getStoredAccounts();
+            const accounts = Object.values(stored);
+
+            if (accounts.length === 0) {
+                container.innerHTML = `
+                    <div class="p-3 bg-slate-50 dark:bg-slate-700/40 rounded-xl text-center text-xs text-slate-400">
+                        First time on this device? Enter your username or email and PIN above to unlock your account.
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = accounts.map(acc => {
+                const colorCls = colorClassMap[acc.color] || 'bg-emerald-600';
+                const initial = (acc.name || 'U').charAt(0).toUpperCase();
+                const displayHandle = acc.username ? `@${acc.username}` : acc.identifier;
+                return `
+                    <div class="p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-700/40 hover:bg-brand-50 dark:hover:bg-slate-700/70 border border-slate-200 dark:border-slate-600 flex items-center justify-between transition group">
+                        <div onclick="selectQuickAccount('${acc.username || acc.identifier}')" class="flex items-center gap-2.5 cursor-pointer flex-1">
+                            <div class="w-8 h-8 rounded-xl ${colorCls} text-white font-bold flex items-center justify-center text-xs shadow-sm">
+                                ${initial}
+                            </div>
+                            <div class="text-left">
+                                <h4 class="text-xs font-bold text-slate-900 dark:text-white leading-tight">${acc.name}</h4>
+                                <p class="text-[10px] text-brand-600 dark:text-brand-400 font-mono font-semibold">${displayHandle}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="selectQuickAccount('${acc.username || acc.identifier}')" class="text-xs text-brand-600 hover:text-brand-700 font-semibold px-2 py-1">
+                                Login
+                            </button>
+                            <button onclick="removeDeviceAccount('${acc.username || acc.identifier}')" class="text-slate-400 hover:text-red-500 p-1.5 transition" title="Remove from this device">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectQuickAccount(identifier) {
+            const idInput = document.getElementById('signin-identifier');
+            const pinInput = document.getElementById('signin-pin');
+            if (idInput) idInput.value = identifier;
+            if (pinInput) {
+                pinInput.value = '';
+                pinInput.focus();
+            }
+            switchAuthTab('signin');
+        }
+
+        function removeDeviceAccount(identifier) {
+            const accounts = getStoredAccounts();
+            const key = identifier.toLowerCase().replace(/^@/, '');
+            const target = accounts[key];
+            const name = target ? target.name : identifier;
+
+            showConfirmModal(
+                "Remove Profile from Device",
+                `Remove "${name}" from this device's quick list? Your account remains safe in the cloud and you can log back in anytime with your username & PIN.`,
+                () => {
+                    delete accounts[key];
+                    saveStoredAccounts(accounts);
+                    if (localStorage.getItem(STORAGE_KEY_ACTIVE_USER) === key) {
+                        localStorage.removeItem(STORAGE_KEY_ACTIVE_USER);
+                    }
+                    renderDeviceAccountsList();
+                    showToast(`Removed @${key} from this device`);
+                }
+            );
+        }
+
+        function switchAuthTab(tab) {
+            const btnSignin = document.getElementById('auth-tab-signin');
+            const btnRegister = document.getElementById('auth-tab-register');
+            const viewSignin = document.getElementById('auth-view-signin');
+            const viewRegister = document.getElementById('auth-view-register');
+            const signinErr = document.getElementById('signin-error');
+            const regErr = document.getElementById('reg-error');
+
+            if (signinErr) signinErr.classList.add('hidden');
+            if (regErr) regErr.classList.add('hidden');
+
+            if (tab === 'signin') {
+                btnSignin.className = "py-2.5 text-xs sm:text-sm font-bold rounded-xl transition shadow-sm bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400";
+                btnRegister.className = "py-2.5 text-xs sm:text-sm font-bold rounded-xl transition text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white";
+                viewSignin.classList.remove('hidden');
+                viewRegister.classList.add('hidden');
+            } else {
+                btnRegister.className = "py-2.5 text-xs sm:text-sm font-bold rounded-xl transition shadow-sm bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400";
+                btnSignin.className = "py-2.5 text-xs sm:text-sm font-bold rounded-xl transition text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white";
+                viewRegister.classList.remove('hidden');
+                viewSignin.classList.add('hidden');
+            }
+        }
+
+        function togglePasswordVisibility(inputId, eyeId) {
+            const input = document.getElementById(inputId);
+            const eye = document.getElementById(eyeId);
+            if (!input || !eye) return;
+            if (input.type === 'password') {
+                input.type = 'text';
+                eye.className = 'fa-solid fa-eye-slash text-xs text-brand-600';
+            } else {
+                input.type = 'password';
+                eye.className = 'fa-solid fa-eye text-xs text-slate-400';
+            }
+        }
+
+        function onUsernameManualInput() {
+            isUsernameCustom = true;
+        }
+
+        function autoSuggestUsername() {
+            if (isUsernameCustom) return;
+            const name = document.getElementById('reg-name')?.value.trim() || '';
+            const email = document.getElementById('reg-email')?.value.trim() || '';
+            const uInput = document.getElementById('reg-username');
+            if (!uInput) return;
+
+            if (email && email.includes('@')) {
+                const prefix = email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '');
+                if (prefix) {
+                    uInput.value = prefix;
+                    return;
+                }
+            }
+            if (name) {
+                const clean = name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+                if (clean) {
+                    uInput.value = clean;
+                }
+            }
         }
 
         function lockAndSwitchAccount() {
@@ -1756,18 +1970,25 @@
                 unsubscribeActiveAccount();
                 unsubscribeActiveAccount = null;
             }
+            localStorage.removeItem(STORAGE_KEY_ACTIVE_USER);
             activeAccountId = null;
             activeAccountProfile = null;
             appState = JSON.parse(JSON.stringify(defaultUserData));
 
             const authModal = document.getElementById('universal-auth-modal');
             if (authModal) authModal.classList.remove('hidden');
-            loadKnownAccounts();
+            renderDeviceAccountsList();
             switchAuthTab('signin');
         }
 
         function lockCurrentAccount() {
             lockAndSwitchAccount();
+        }
+
+        function openCreateAccountModal() {
+            const authModal = document.getElementById('universal-auth-modal');
+            if (authModal) authModal.classList.remove('hidden');
+            switchAuthTab('register');
         }
 
         function deleteCurrentAccount() {
@@ -1776,26 +1997,25 @@
 
             showConfirmModal(
                 "Delete Profile",
-                `Permanently delete account "${userName}" (${activeAccountId}) and all records across all devices? This cannot be undone.`,
+                `Permanently delete account "${userName}" (@${activeAccountId})?`,
                 async () => {
+                    const accounts = getStoredAccounts();
+                    delete accounts[activeAccountId.toLowerCase()];
+                    saveStoredAccounts(accounts);
+
                     const docId = normalizeAccountId(activeAccountId);
                     if (db && authUser) {
                         try {
                             const accountDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'accounts', docId);
                             await deleteDoc(accountDocRef);
-                        } catch (err) {
-                            console.error("Delete error:", err);
-                        }
+                        } catch (err) {}
                     }
                     lockAndSwitchAccount();
-                    showToast("Account deleted from cloud");
+                    showToast("Account deleted from device");
                 }
             );
         }
 
-        /* ----------------------------------------------------
-           DATE & NAVIGATION HELPERS
-           ---------------------------------------------------- */
         function getMonthKey(date) {
             const y = date.getFullYear();
             const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -1862,9 +2082,6 @@
             syncAccountToCloud();
         }
 
-        /* ----------------------------------------------------
-           SALARY & CUSTOM PIN CHANGE
-           ---------------------------------------------------- */
         function openSalaryModal() {
             const mKey = getMonthKey(activeDate);
             const salary = appState.monthlySalaries[mKey] !== undefined ? appState.monthlySalaries[mKey] : appState.salary;
@@ -1922,9 +2139,6 @@
             showToast("Security PIN updated and synced to all devices!");
         }
 
-        /* ----------------------------------------------------
-           BUDGET & 50/30/20 RULES
-           ---------------------------------------------------- */
         function syncDebtCategory() {
             const totalEmi = (appState.debts || []).reduce((sum, d) => sum + (Number(d.emi) || 0), 0);
             let debtCat = appState.categories.find(c => c.name.toLowerCase().includes('emi') || c.name.toLowerCase().includes('loan'));
@@ -2047,9 +2261,6 @@
             );
         }
 
-        /* ----------------------------------------------------
-           EXPENSE TRACKING & CSV IMPORT
-           ---------------------------------------------------- */
         function openAddExpenseModal(editId = null) {
             const title = document.getElementById('expense-modal-title');
             const editIdEl = document.getElementById('exp-edit-id');
@@ -2130,7 +2341,7 @@
             syncAccountToCloud();
             closeAddExpenseModal();
             renderAll();
-            showToast("Expense saved successfully!");
+            showToast("Expense saved & synced!");
         }
 
         function deleteExpense(id) {
@@ -2195,9 +2406,6 @@
             reader.readAsText(file);
         }
 
-        /* ----------------------------------------------------
-           RECURRING BILLS
-           ---------------------------------------------------- */
         function openRecurringModal() {
             renderRecurringList();
             document.getElementById('recurring-modal')?.classList.remove('hidden');
@@ -2303,9 +2511,6 @@
             showToast(`Copied ${count} recurring bills to current expenses!`);
         }
 
-        /* ----------------------------------------------------
-           INVESTMENTS, GOALS & DEBTS
-           ---------------------------------------------------- */
         function openAddHoldingModal(editIdx = null) {
             const title = document.getElementById('holding-modal-title');
             const editIdxEl = document.getElementById('holding-edit-idx');
@@ -2499,7 +2704,7 @@
             syncAccountToCloud();
             closeDebtModal();
             renderAll();
-            showToast("Loan details saved & synced to Needs budget!");
+            showToast("Loan saved & synced to Needs budget!");
         }
 
         function deleteDebt(id) {
@@ -2518,9 +2723,6 @@
             );
         }
 
-        /* ----------------------------------------------------
-           TAX & SIMULATOR
-           ---------------------------------------------------- */
         function runSimulator() {
             const slider = document.getElementById('sim-slider');
             const amountEl = document.getElementById('simulator-amount');
@@ -2545,9 +2747,6 @@
             if (s10) s10.innerText = formatINR(y10);
         }
 
-        /* ----------------------------------------------------
-           DATA BACKUP & DOWNLOADS
-           ---------------------------------------------------- */
         function exportDataJson() {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
             const downloadAnchor = document.createElement('a');
@@ -2570,7 +2769,7 @@
                     appState = Object.assign({}, JSON.parse(JSON.stringify(defaultUserData)), parsed);
                     syncAccountToCloud();
                     renderAll();
-                    showToast("Data backup successfully restored!");
+                    showToast("Data backup successfully restored & synced!");
                 } catch(err) {
                     showToast("Invalid JSON file", "fa-circle-exclamation");
                 }
@@ -2579,23 +2778,6 @@
             reader.readAsText(file);
         }
 
-        function downloadReadmeFile() {
-            const readmeText = `# Ledger — Personal Finance Tracker\n\nFor full user guide and deployment instructions, visit your GitHub repository settings.`;
-            const blob = new Blob([readmeText], { type: 'text/markdown' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'README.md';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showToast("README downloaded!");
-        }
-
-        /* ----------------------------------------------------
-           MAIN RENDERING ENGINE
-           ---------------------------------------------------- */
         function renderAll() {
             const mKey = getMonthKey(activeDate);
             const mName = getMonthName(activeDate);
@@ -3132,8 +3314,8 @@
             }
         }
 
-        /* Expose all function bindings to window for HTML inline event listeners */
         Object.assign(window, {
+            handleGoogleResponse,
             switchAuthTab,
             togglePasswordVisibility,
             autoSuggestUsername,
@@ -3141,8 +3323,10 @@
             handleUniversalSignIn,
             handleUniversalRegister,
             selectQuickAccount,
+            removeDeviceAccount,
             lockAndSwitchAccount,
             lockCurrentAccount,
+            openCreateAccountModal,
             deleteCurrentAccount,
             changeMonth,
             resetToCurrentMonth,
@@ -3187,16 +3371,40 @@
             runSimulator,
             exportDataJson,
             importDataJson,
-            downloadReadmeFile,
             closeConfirmModal,
             handleConfirmAccept,
-            showToast
+            showToast,
+            triggerImmediateCloudSync
         });
 
-        /* Application Bootstrap on Window Load */
         window.onload = async function() {
             await initCloudEngine();
             runSimulator();
+
+            // 1. Check if there is already an active session cached on this device
+            const activeUser = localStorage.getItem(STORAGE_KEY_ACTIVE_USER);
+            const stored = getStoredAccounts();
+
+            if (activeUser && stored[activeUser.toLowerCase()]) {
+                const account = stored[activeUser.toLowerCase()];
+                activeAccountId = account.username;
+                activeAccountProfile = account;
+                appState = Object.assign({}, JSON.parse(JSON.stringify(defaultUserData)), account);
+
+                completeLogin(normalizeAccountId(activeAccountId));
+
+                // Background check if newer cloud version exists
+                fetchAccountFromCloud(activeAccountId).then(cloudData => {
+                    if (cloudData && cloudData.updatedAt && cloudData.updatedAt > (appState.updatedAt || '')) {
+                        mergeRemoteData(cloudData);
+                    }
+                }).catch(() => {});
+                return;
+            }
+
+            // 2. Otherwise display Universal Cloud Login modal
+            document.getElementById('universal-auth-modal')?.classList.remove('hidden');
+            renderDeviceAccountsList();
         };
     </script>
 </body>
